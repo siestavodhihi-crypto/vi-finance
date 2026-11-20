@@ -69,6 +69,68 @@ export interface RecurringBill {
   note?: string;
 }
 
+// ---- Mục tiêu tiết kiệm ----
+
+export interface GoalContribution {
+  id: string;
+  amount: number;
+  date: string; // ISO
+  walletId?: string;
+  txId?: string; // giao dịch chuyển tiền tương ứng
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  target: number;
+  saved: number;
+  deadline?: string; // "YYYY-MM-DD"
+  color: string;
+  icon: string;
+  createdAt: string;
+  contributions: GoalContribution[];
+}
+
+// ---- Sổ nợ & chia tiền ----
+
+export type DebtDirection = "they_owe" | "i_owe";
+
+export interface Debt {
+  id: string;
+  person: string;
+  amount: number;
+  direction: DebtDirection;
+  note: string;
+  date: string; // ISO
+  dueDate?: string;
+  settled: boolean;
+  settledAt?: string;
+  splitId?: string;
+}
+
+export type SplitMode = "equal" | "itemized";
+
+export interface SplitItem {
+  id: string;
+  name: string;
+  amount: number;
+  sharedBy: string[]; // rỗng = cả nhóm
+}
+
+export interface SplitBill {
+  id: string;
+  title: string;
+  date: string;
+  payer: string;
+  members: string[];
+  mode: SplitMode;
+  total: number;
+  items: SplitItem[];
+  sharedFee: number;
+  shares: Record<string, number>;
+  createdAt: string;
+}
+
 export interface AppSettings {
   privacyMode: boolean;
   theme: "light" | "dark" | "system";

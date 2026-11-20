@@ -4,6 +4,7 @@ import { Providers } from "@/components/providers";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { TopBar } from "@/components/layout/top-bar";
+import { QuickAddModal } from "@/components/quick-add/quick-add-modal";
 
 export const metadata: Metadata = {
   title: "Vàng — Quản lý tài chính cá nhân",
@@ -34,6 +35,9 @@ export default function RootLayout({
 
           {/* Mobile Bottom Nav */}
           <BottomNav />
+
+          {/* Global Quick-Add (Ctrl/Cmd+K) */}
+          <QuickAddModal />
         </Providers>
       </body>
     </html>

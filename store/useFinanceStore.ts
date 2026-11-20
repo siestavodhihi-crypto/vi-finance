@@ -9,6 +9,9 @@ import {
   Wallet,
   Budget,
   RecurringBill,
+  SavingsGoal,
+  Debt,
+  SplitBill,
   AppSettings,
 } from "@/types";
 import {
@@ -16,8 +19,12 @@ import {
   SAMPLE_WALLETS,
   SAMPLE_BUDGETS,
   SAMPLE_RECURRING_BILLS,
+  SAMPLE_GOALS,
+  SAMPLE_DEBTS,
+  SAMPLE_SPLITS,
 } from "@/lib/sample-data";
 import { DEFAULT_DAILY_LIMIT } from "@/lib/constants";
+import { splitDebts } from "@/lib/split";
 import { format } from "date-fns";
 
 interface FinanceState {
@@ -25,6 +32,9 @@ interface FinanceState {
   wallets: Wallet[];
   budgets: Budget[];
   recurringBills: RecurringBill[];
+  goals: SavingsGoal[];
+  debts: Debt[];
+  splits: SplitBill[];
   settings: AppSettings;
 
   // Actions — Transactions
@@ -58,6 +68,19 @@ interface FinanceState {
   payBill: (billId: string, monthKey?: string) => void;
   unpayBill: (billId: string, monthKey?: string) => void;
 
+  // Actions — Goals (Mục tiêu tiết kiệm)
+  addGoal: (goal: Omit<SavingsGoal, "id" | "createdAt" | "contributions">) => void;
+  updateGoal: (id: string, data: Partial<SavingsGoal>) => void;
+  deleteGoal: (id: string) => void;
+  contributeGoal: (goalId: string, amount: number, walletId?: string) => void;
+
+  // Actions — Debts & Split (Sổ nợ & Chia tiền nhóm)
+  addDebt: (debt: Omit<Debt, "id" | "settled" | "settledAt">) => void;
+  toggleSettleDebt: (id: string) => void;
+  deleteDebt: (id: string) => void;
+  addSplitBill: (bill: Omit<SplitBill, "id" | "createdAt">) => void;
+  deleteSplitBill: (id: string) => void;
+
   // Actions — Settings
   updateSettings: (settings: Partial<AppSettings>) => void;
   togglePrivacyMode: () => void;
@@ -74,6 +97,9 @@ export const useFinanceStore = create<FinanceState>()(
       wallets: SAMPLE_WALLETS,
       budgets: SAMPLE_BUDGETS,
       recurringBills: SAMPLE_RECURRING_BILLS,
+      goals: SAMPLE_GOALS,
+      debts: SAMPLE_DEBTS,
+      splits: SAMPLE_SPLITS,
       settings: {
         privacyMode: false,
         theme: "system",
@@ -302,6 +328,138 @@ export const useFinanceStore = create<FinanceState>()(
           ),
         }));
       },
+
+      // ── Goals (Mục tiêu tiết kiệm) ────────────────────────────
+      addGoal: (goal) =>
+        set((state) => {
+          const now = new Date().toISOString();
+          const initialContribs =
+            goal.saved > 0
+              ? [{ id: generateId(), amount: goal.saved, date: now }]
+              : [];
+          return {
+            goals: [
+              {
+                ...goal,
+                id: generateId(),
+                createdAt: now,
+                contributions: initialContribs,
+              },
+              ...(state.goals ?? []),
+            ],
+          };
+        }),
+
+      updateGoal: (id, data) =>
+        set((state) => ({
+          goals: (state.goals ?? []).map((g) => (g.id === id ? { ...g, ...data } : g)),
+        })),
+
+      deleteGoal: (id) =>
+        set((state) => ({
+          goals: (state.goals ?? []).filter((g) => g.id !== id),
+        })),
+
+      contributeGoal: (goalId, amount, walletId) => {
+        if (amount <= 0) return;
+        const now = new Date().toISOString();
+        const goal = (get().goals ?? []).find((g) => g.id === goalId);
+        if (!goal) return;
+
+        // Nếu chọn ví nguồn, trừ số dư ví đó (tạo giao dịch tiết kiệm nếu không có ví khóa)
+        let txId: string | undefined;
+        if (walletId) {
+          const lockedWallet = get().wallets.find((w) => w.isLocked && w.id !== walletId);
+          if (lockedWallet) {
+            get().transferMoney({
+              fromWalletId: walletId,
+              toWalletId: lockedWallet.id,
+              amount,
+              note: `Nạp mục tiêu: ${goal.name}`,
+              date: now,
+            });
+            txId = get().transactions[0]?.id;
+          } else {
+            get().addTransaction({
+              type: "expense",
+              amount,
+              categoryId: "savings",
+              walletId,
+              note: `Nạp mục tiêu: ${goal.name}`,
+              date: now,
+            });
+            txId = get().transactions[0]?.id;
+          }
+        }
+
+        set((state) => ({
+          goals: (state.goals ?? []).map((g) =>
+            g.id === goalId
+              ? {
+                  ...g,
+                  saved: g.saved + amount,
+                  contributions: [
+                    ...g.contributions,
+                    { id: generateId(), amount, date: now, walletId, txId },
+                  ],
+                }
+              : g
+          ),
+        }));
+      },
+
+      // ── Debts & Split (Sổ nợ & Chia tiền nhóm) ────────────────
+      addDebt: (debt) =>
+        set((state) => ({
+          debts: [
+            { ...debt, id: generateId(), settled: false },
+            ...(state.debts ?? []),
+          ],
+        })),
+
+      toggleSettleDebt: (id) =>
+        set((state) => ({
+          debts: (state.debts ?? []).map((d) =>
+            d.id === id
+              ? {
+                  ...d,
+                  settled: !d.settled,
+                  settledAt: !d.settled ? new Date().toISOString() : undefined,
+                }
+              : d
+          ),
+        })),
+
+      deleteDebt: (id) =>
+        set((state) => ({
+          debts: (state.debts ?? []).filter((d) => d.id !== id),
+        })),
+
+      addSplitBill: (bill) => {
+        const splitId = generateId();
+        const now = new Date().toISOString();
+        const generatedDebts = splitDebts(bill.shares, bill.payer).map((sd) => ({
+          id: generateId(),
+          person: sd.person,
+          amount: sd.amount,
+          direction: sd.direction,
+          note: `Chia tiền: ${bill.title}`,
+          date: bill.date,
+          settled: false,
+          splitId,
+        }));
+
+        set((state) => ({
+          splits: [{ ...bill, id: splitId, createdAt: now }, ...(state.splits ?? [])],
+          debts: [...generatedDebts, ...(state.debts ?? [])],
+        }));
+      },
+
+      deleteSplitBill: (id) =>
+        set((state) => ({
+          splits: (state.splits ?? []).filter((s) => s.id !== id),
+          debts: (state.debts ?? []).filter((d) => d.splitId !== id),
+        })),
 
       // ── Settings ──────────────────────────────────────────────
       updateSettings: (settings) =>

@@ -1,7 +1,7 @@
 /**
  * Sample data — realistic student finance in Vietnam (Nov 2026)
  */
-import { Transaction, Wallet, Budget, RecurringBill } from "@/types";
+import { Transaction, Wallet, Budget, RecurringBill, SavingsGoal, Debt, SplitBill } from "@/types";
 import { format, subDays } from "date-fns";
 
 function daysAgo(n: number, time = "08:00:00"): string {
@@ -262,6 +262,67 @@ export const SAMPLE_TRANSACTIONS: Transaction[] = [
     date: daysAgo(9, "16:00:00"),
     createdAt: daysAgo(9, "16:00:00"),
   },
+  // --- Dữ liệu tháng trước (để Báo cáo tháng so sánh trực quan) ---
+  {
+    id: "t-prev-01",
+    type: "income",
+    amount: 3_000_000,
+    categoryId: "family",
+    walletId: "bank",
+    note: "Ba mẹ gửi tiền sinh hoạt tháng 10",
+    date: daysAgo(35, "09:00:00"),
+    createdAt: daysAgo(35, "09:00:00"),
+  },
+  {
+    id: "t-prev-02",
+    type: "income",
+    amount: 1_200_000,
+    categoryId: "freelance",
+    walletId: "bank",
+    note: "Làm thêm quán cà phê tháng 10",
+    date: daysAgo(32, "19:00:00"),
+    createdAt: daysAgo(32, "19:00:00"),
+  },
+  {
+    id: "t-prev-03",
+    type: "expense",
+    amount: 2_500_000,
+    categoryId: "rent",
+    walletId: "bank",
+    note: "Tiền phòng trọ tháng 10",
+    date: daysAgo(36, "08:00:00"),
+    createdAt: daysAgo(36, "08:00:00"),
+  },
+  {
+    id: "t-prev-04",
+    type: "expense",
+    amount: 950_000,
+    categoryId: "food",
+    walletId: "cash",
+    note: "Ăn uống tháng 10",
+    date: daysAgo(30, "12:00:00"),
+    createdAt: daysAgo(30, "12:00:00"),
+  },
+  {
+    id: "t-prev-05",
+    type: "expense",
+    amount: 280_000,
+    categoryId: "utilities",
+    walletId: "bank",
+    note: "Điện nước tháng 10",
+    date: daysAgo(31, "10:00:00"),
+    createdAt: daysAgo(31, "10:00:00"),
+  },
+  {
+    id: "t-prev-06",
+    type: "expense",
+    amount: 180_000,
+    categoryId: "transport",
+    walletId: "cash",
+    note: "Xăng xe & gửi xe tháng 10",
+    date: daysAgo(29, "17:00:00"),
+    createdAt: daysAgo(29, "17:00:00"),
+  },
 ];
 
 export const SAMPLE_BUDGETS: Budget[] = [
@@ -288,5 +349,107 @@ export const SAMPLE_BUDGETS: Budget[] = [
     categoryId: "entertainment",
     limit: 300_000,
     month: "2026-11",
+  },
+];
+
+export const SAMPLE_GOALS: SavingsGoal[] = [
+  {
+    id: "goal-laptop",
+    name: "Đổi Laptop học lập trình",
+    target: 15_000_000,
+    saved: 4_500_000,
+    deadline: "2027-08-30",
+    color: "#C8A44A",
+    icon: "Laptop",
+    createdAt: daysAgo(55, "09:00:00"),
+    contributions: [
+      { id: "c1", amount: 1_500_000, date: daysAgo(50, "09:00:00"), walletId: "bank" },
+      { id: "c2", amount: 1_500_000, date: daysAgo(28, "09:00:00"), walletId: "bank" },
+      { id: "c3", amount: 1_500_000, date: daysAgo(6, "09:00:00"), walletId: "bank" },
+    ],
+  },
+  {
+    id: "goal-trip",
+    name: "Đi Đà Lạt cùng nhóm bạn",
+    target: 2_500_000,
+    saved: 1_600_000,
+    deadline: "2027-01-15",
+    color: "#2D7D5F",
+    icon: "Compass",
+    createdAt: daysAgo(40, "09:00:00"),
+    contributions: [
+      { id: "c4", amount: 800_000, date: daysAgo(35, "09:00:00"), walletId: "momo" },
+      { id: "c5", amount: 800_000, date: daysAgo(12, "09:00:00"), walletId: "momo" },
+    ],
+  },
+  {
+    id: "goal-emergency",
+    name: "Quỹ dự phòng 1 tháng sinh hoạt",
+    target: 4_000_000,
+    saved: 1_000_000,
+    color: "#4A90D9",
+    icon: "Shield",
+    createdAt: daysAgo(30, "09:00:00"),
+    contributions: [
+      { id: "c6", amount: 1_000_000, date: daysAgo(20, "09:00:00"), walletId: "bank" },
+    ],
+  },
+];
+
+export const SAMPLE_DEBTS: Debt[] = [
+  {
+    id: "debt-1",
+    person: "Minh",
+    amount: 120_000,
+    direction: "they_owe",
+    note: "Chia tiền ăn lẩu tối thứ 7",
+    date: daysAgo(2, "20:00:00"),
+    settled: false,
+    splitId: "split-1",
+  },
+  {
+    id: "debt-2",
+    person: "Lan",
+    amount: 120_000,
+    direction: "they_owe",
+    note: "Chia tiền ăn lẩu tối thứ 7",
+    date: daysAgo(2, "20:00:00"),
+    settled: false,
+    splitId: "split-1",
+  },
+  {
+    id: "debt-3",
+    person: "Hùng",
+    amount: 65_000,
+    direction: "i_owe",
+    note: "Hùng đặt hộ trà sữa & bánh tráng",
+    date: daysAgo(1, "15:30:00"),
+    settled: false,
+  },
+  {
+    id: "debt-4",
+    person: "Tuấn",
+    amount: 200_000,
+    direction: "they_owe",
+    note: "Mượn đóng tiền in tài liệu",
+    date: daysAgo(9, "10:00:00"),
+    settled: true,
+    settledAt: daysAgo(4, "14:00:00"),
+  },
+];
+
+export const SAMPLE_SPLITS: SplitBill[] = [
+  {
+    id: "split-1",
+    title: "Ăn lẩu tối thứ 7",
+    date: daysAgo(2, "20:00:00"),
+    payer: "Tôi",
+    members: ["Tôi", "Minh", "Lan"],
+    mode: "equal",
+    total: 360_000,
+    items: [],
+    sharedFee: 0,
+    shares: { Tôi: 120_000, Minh: 120_000, Lan: 120_000 },
+    createdAt: daysAgo(2, "20:00:00"),
   },
 ];
