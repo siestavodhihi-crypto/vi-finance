@@ -252,3 +252,33 @@ create policy "receipts_delete_own" on storage.objects
   for delete using (
     bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- ============================================================================
+-- 6. RPC XÓA TÀI KHOẢN & TOÀN BỘ DỮ LIỆU CỦA CHÍNH USER ĐANG ĐĂNG NHẬP
+-- ============================================================================
+
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Chưa đăng nhập';
+  end if;
+
+  -- Xóa toàn bộ ảnh hóa đơn đính kèm trong Storage (nếu có)
+  delete from storage.objects
+  where bucket_id = 'receipts'
+    and (storage.foldername(name))[1] = uid::text;
+
+  -- Xóa user khỏi auth.users -> ON DELETE CASCADE tự dọn toàn bộ 8 bảng dữ liệu
+  delete from auth.users where id = uid;
+end;
+$$;
+
+revoke all on function public.delete_my_account() from public;
+grant execute on function public.delete_my_account() to authenticated;

@@ -105,6 +105,18 @@ interface FinanceState {
   // Actions — Settings (lưu localStorage cho tùy chọn UI cá nhân)
   updateSettings: (settings: Partial<AppSettings>) => void;
   togglePrivacyMode: () => void;
+
+  // Actions — Backup / Restore / Delete Account
+  importBackup: (payload: {
+    wallets: Wallet[];
+    transactions: Transaction[];
+    budgets: Budget[];
+    recurringBills: RecurringBill[];
+    goals: SavingsGoal[];
+    debts: Debt[];
+    splits: SplitBill[];
+  }) => Promise<void>;
+  deleteAccountAndData: () => Promise<void>;
 }
 
 function generateId(): string {
@@ -763,4 +775,43 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
       saveLocalSettings(next);
       return { settings: next };
     }),
+
+  // ── Backup / Restore / Delete Account ─────────────────────
+  importBackup: async (payload) => {
+    const { user, dataMode } = get();
+    set({
+      wallets: payload.wallets,
+      transactions: payload.transactions,
+      budgets: payload.budgets,
+      recurringBills: payload.recurringBills,
+      goals: payload.goals,
+      debts: payload.debts,
+      splits: payload.splits,
+    });
+
+    if (dataMode === "supabase" && user) {
+      try {
+        await repo.replaceAllUserData(user.id, payload);
+        toast.success("Đã khôi phục dữ liệu và đồng bộ lên Supabase!");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Lỗi đồng bộ";
+        toast.error(`Khôi phục cục bộ thành công nhưng lỗi đồng bộ Supabase: ${msg}`);
+      }
+    } else {
+      toast.success("Đã khôi phục toàn bộ dữ liệu từ bản sao lưu!");
+    }
+  },
+
+  deleteAccountAndData: async () => {
+    const { user, dataMode } = get();
+    if (dataMode === "supabase" && user) {
+      await repo.deleteAccountAndAllData(user.id);
+    }
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("vang-ui-settings");
+      localStorage.removeItem("vang-onboarding-done");
+    }
+    get().clearUserData();
+    toast.success("Đã xóa tài khoản và toàn bộ dữ liệu.");
+  },
 }));

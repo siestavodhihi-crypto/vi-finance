@@ -410,3 +410,168 @@ export async function removeSplitBill(id: string) {
   const { error } = await db().from("split_bills").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ── Bulk Import (Khôi phục từ JSON) & Xóa toàn bộ dữ liệu/tài khoản ──
+
+export async function replaceAllUserData(
+  userId: string,
+  payload: {
+    wallets: Wallet[];
+    transactions: Transaction[];
+    budgets: Budget[];
+    recurringBills: RecurringBill[];
+    goals: SavingsGoal[];
+    debts: Debt[];
+    splits: SplitBill[];
+  }
+) {
+  const client = db();
+  // Xóa theo thứ tự phụ thuộc khóa ngoại
+  await client.from("debts").delete().eq("user_id", userId);
+  await client.from("split_bills").delete().eq("user_id", userId);
+  await client.from("transactions").delete().eq("user_id", userId);
+  await client.from("recurring_bills").delete().eq("user_id", userId);
+  await client.from("budgets").delete().eq("user_id", userId);
+  await client.from("saving_goals").delete().eq("user_id", userId);
+  await client.from("wallets").delete().eq("user_id", userId);
+
+  if (payload.wallets.length > 0) {
+    const { error } = await client.from("wallets").insert(
+      payload.wallets.map((w) => ({
+        id: w.id,
+        user_id: userId,
+        name: w.name,
+        balance: w.balance,
+        initial_balance: w.initialBalance ?? w.balance,
+        icon: w.icon,
+        color: w.color,
+        is_locked: Boolean(w.isLocked),
+        note: w.note ?? null,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.transactions.length > 0) {
+    const { error } = await client.from("transactions").insert(
+      payload.transactions.map((tx) => ({
+        id: tx.id,
+        user_id: userId,
+        type: tx.type,
+        amount: tx.amount,
+        category_id: tx.categoryId,
+        wallet_id: tx.walletId,
+        to_wallet_id: tx.toWalletId ?? null,
+        note: tx.note,
+        receipt_url: tx.receiptUrl ?? null,
+        date: tx.date,
+        created_at: tx.createdAt,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.budgets.length > 0) {
+    const { error } = await client.from("budgets").insert(
+      payload.budgets.map((b) => ({
+        id: b.id,
+        user_id: userId,
+        category_id: b.categoryId,
+        limit_amount: b.limit,
+        month: b.month,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.recurringBills.length > 0) {
+    const { error } = await client.from("recurring_bills").insert(
+      payload.recurringBills.map((b) => ({
+        id: b.id,
+        user_id: userId,
+        name: b.name,
+        amount: b.amount,
+        category_id: b.categoryId,
+        due_day: b.dueDay,
+        wallet_id: b.walletId || null,
+        paid_months: b.paidMonths,
+        note: b.note ?? null,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.goals.length > 0) {
+    const { error } = await client.from("saving_goals").insert(
+      payload.goals.map((g) => ({
+        id: g.id,
+        user_id: userId,
+        name: g.name,
+        target: g.target,
+        saved: g.saved,
+        deadline: g.deadline ?? null,
+        color: g.color,
+        icon: g.icon,
+        contributions: g.contributions,
+        created_at: g.createdAt,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.splits.length > 0) {
+    const { error } = await client.from("split_bills").insert(
+      payload.splits.map((s) => ({
+        id: s.id,
+        user_id: userId,
+        title: s.title,
+        date: s.date,
+        payer: s.payer,
+        members: s.members,
+        mode: s.mode,
+        total: s.total,
+        items: s.items,
+        shared_fee: s.sharedFee,
+        shares: s.shares,
+        created_at: s.createdAt,
+      }))
+    );
+    if (error) throw error;
+  }
+
+  if (payload.debts.length > 0) {
+    const { error } = await client.from("debts").insert(
+      payload.debts.map((d) => ({
+        id: d.id,
+        user_id: userId,
+        person: d.person,
+        amount: d.amount,
+        direction: d.direction,
+        note: d.note,
+        date: d.date,
+        due_date: d.dueDate ?? null,
+        settled: d.settled,
+        settled_at: d.settledAt ?? null,
+        split_id: d.splitId ?? null,
+      }))
+    );
+    if (error) throw error;
+  }
+}
+
+export async function deleteAccountAndAllData(userId: string) {
+  const client = db();
+  // Ưu tiên gọi RPC delete_my_account() (xóa cả auth.users + CASCADE toàn bộ dữ liệu)
+  const { error: rpcError } = await client.rpc("delete_my_account");
+  if (rpcError) {
+    // Fallback nếu chưa chạy phần RPC mới nhất trong schema.sql: xóa sạch toàn bộ dữ liệu trong 7 bảng
+    await client.from("debts").delete().eq("user_id", userId);
+    await client.from("split_bills").delete().eq("user_id", userId);
+    await client.from("transactions").delete().eq("user_id", userId);
+    await client.from("recurring_bills").delete().eq("user_id", userId);
+    await client.from("budgets").delete().eq("user_id", userId);
+    await client.from("saving_goals").delete().eq("user_id", userId);
+    await client.from("wallets").delete().eq("user_id", userId);
+  }
+  await client.auth.signOut();
+}
