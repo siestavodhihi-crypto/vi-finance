@@ -9,29 +9,34 @@ import {
   Tag,
   ArrowDownCircle,
   ArrowUpCircle,
+  Wand2,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format, subDays } from "date-fns";
+import { toast } from "sonner";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useUIStore } from "@/store/useUIStore";
 import { parseQuickAdd } from "@/lib/quick-add-parser";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, getVietnamDateString } from "@/lib/finance";
 import { CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/constants";
 import { CategoryId } from "@/types";
+import { ParsedAiTx } from "@/lib/ai-quick-add";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { CategoryIcon } from "@/components/transactions/category-icon";
 import { cn } from "@/lib/utils";
 
 const EXAMPLES = [
+  "hôm nay đổ xăng 70k",
   "trà sữa 35k momo",
-  "tiền trọ 2tr5 ck",
-  "hôm qua grab 45 nghìn",
+  "sáng ăn phở 40k, chiều trà sữa 55k momo",
   "+1.5tr làm thêm",
 ];
 
 export function QuickAddModal() {
   const { quickAddOpen, setQuickAddOpen, toggleQuickAdd } = useUIStore();
 
-  // Phím tắt toàn cục Ctrl+K / Cmd+K
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -57,6 +62,11 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
   const [overrideDate, setOverrideDate] = useState<string | null>(null);
   const [overrideNote, setOverrideNote] = useState<string | null>(null);
 
+  // AI multi-item / smart parsing state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiItems, setAiItems] = useState<ParsedAiTx[] | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -65,7 +75,6 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
   }, []);
 
   const parsed = useMemo(() => parseQuickAdd(raw, wallets), [raw, wallets]);
-
   const defaultWalletId = wallets.find((w) => !w.isLocked)?.id ?? wallets[0]?.id ?? "";
 
   const effectiveType = overrideType ?? parsed.type;
@@ -81,13 +90,85 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
   const availableCategories =
     effectiveType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  const canSave = parsed.amount !== null && parsed.amount > 0 && Boolean(effectiveWalletId);
+  const handleAskAi = async () => {
+    if (!raw.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const sb = getSupabaseClient();
+      if (sb) {
+        const { data } = await sb.auth.getSession();
+        if (data.session?.access_token) {
+          headers["Authorization"] = `Bearer ${data.session.access_token}`;
+        }
+      }
+
+      const res = await fetch("/api/ai-parse-tx", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          text: raw.trim(),
+          today: getVietnamDateString(),
+          wallets: wallets.map((w) => ({ id: w.id, name: w.name })),
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        setAiError(json.error || "AI không nhận diện được câu này.");
+        return;
+      }
+
+      const items = json.items as ParsedAiTx[];
+      if (items.length === 1) {
+        // Điền thẳng vào preview tag cho người dùng kiểm tra & bấm Enter lưu
+        const it = items[0];
+        setAiItems(null);
+        setOverrideType(it.type);
+        setOverrideCategory(it.categoryId);
+        setOverrideWallet(it.walletId ?? defaultWalletId);
+        setOverrideDate(it.date);
+        setOverrideNote(it.note);
+        toast.info("AI đã nhận diện xong — kiểm tra lại rồi bấm Lưu nhé!");
+      } else {
+        setAiItems(items);
+        toast.info(`AI tách được ${items.length} giao dịch — kiểm tra rồi bấm Lưu tất cả!`);
+      }
+    } catch {
+      setAiError("Lỗi kết nối AI. Bạn vẫn có thể lưu trực tiếp bằng nhận diện nhanh.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const canSaveSingle = parsed.amount !== null && parsed.amount > 0 && Boolean(effectiveWalletId);
+  const canSaveMulti = Boolean(aiItems && aiItems.length > 0 && defaultWalletId);
+  const canSave = aiItems ? canSaveMulti : canSaveSingle;
 
   const handleSave = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!canSave || !parsed.amount) return;
+    if (!canSave) return;
 
     const nowTime = format(new Date(), "HH:mm:ss");
+
+    if (aiItems && aiItems.length > 0) {
+      for (const it of aiItems) {
+        addTransaction({
+          type: it.type,
+          amount: it.amount,
+          categoryId: it.categoryId,
+          walletId: it.walletId || defaultWalletId,
+          note: it.note || CATEGORIES[it.categoryId]?.name || "",
+          date: `${it.date}T${nowTime}`,
+        });
+      }
+      onClose();
+      return;
+    }
+
+    if (!parsed.amount) return;
     addTransaction({
       type: effectiveType,
       amount: parsed.amount,
@@ -107,15 +188,15 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
         <Dialog.Content
           className={cn(
             "fixed z-50 left-1/2 -translate-x-1/2",
-            "top-[10%] md:top-[18%] w-[calc(100%-24px)] max-w-lg",
+            "top-[8%] md:top-[15%] w-[calc(100%-24px)] max-w-lg",
             "rounded-[var(--radius-xl)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-lg)]",
-            "overflow-hidden"
+            "overflow-hidden max-h-[85dvh] flex flex-col"
           )}
         >
-          <form onSubmit={handleSave}>
+          <form onSubmit={handleSave} className="flex flex-col overflow-hidden">
             {/* Header + Input */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--color-border)]">
-              <Sparkles size={18} strokeWidth={2} className="text-[var(--color-accent)] flex-shrink-0" />
+            <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-[var(--color-border)]">
+              <Sparkles size={18} strokeWidth={2} className="text-[var(--color-accent-text)] flex-shrink-0" />
               <Dialog.Title className="sr-only">Nhập nhanh giao dịch</Dialog.Title>
               <input
                 ref={inputRef}
@@ -123,16 +204,29 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                 value={raw}
                 onChange={(e) => {
                   setRaw(e.target.value);
-                  // Reset override khi người dùng tiếp tục gõ câu mới
                   setOverrideType(null);
                   setOverrideCategory(null);
                   setOverrideWallet(null);
                   setOverrideDate(null);
                   setOverrideNote(null);
+                  setAiItems(null);
+                  setAiError(null);
                 }}
-                placeholder='Nhập nhanh: "trà sữa 35k momo", "tiền trọ 2tr5 ck"...'
-                className="flex-1 bg-transparent text-base font-500 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/60 focus:outline-none"
+                placeholder='Nhập tự nhiên: "hôm nay đổ xăng 70k", "sáng phở 40k, chiều trà sữa 55k"...'
+                className="flex-1 bg-transparent text-sm sm:text-base font-500 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/60 focus:outline-none"
               />
+              {raw.trim() && (
+                <button
+                  type="button"
+                  onClick={handleAskAi}
+                  disabled={aiLoading}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] text-[var(--color-accent-text)] text-xs font-700 hover:opacity-90 flex-shrink-0 disabled:opacity-50"
+                  title="Nhờ AI Gemini hiểu câu phức tạp hoặc nhiều món cùng lúc"
+                >
+                  {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <Wand2 size={13} />}
+                  <span>AI</span>
+                </button>
+              )}
               <Dialog.Close asChild>
                 <button
                   type="button"
@@ -144,12 +238,18 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
               </Dialog.Close>
             </div>
 
-            {/* Body: Preview tags hoặc gợi ý câu mẫu */}
-            <div className="p-4 space-y-4">
+            {/* Body */}
+            <div className="p-4 space-y-3 overflow-y-auto">
+              {aiError && (
+                <p className="text-xs text-[var(--color-expense)] bg-[var(--color-expense)]/8 border border-[var(--color-expense)]/25 rounded-[var(--radius-sm)] px-3 py-2">
+                  {aiError}
+                </p>
+              )}
+
               {!raw.trim() ? (
                 <div className="space-y-2.5">
                   <p className="text-xs font-500 text-[var(--color-text-secondary)]">
-                    Thử nhập nhanh (bấm để điền thử):
+                    Gõ câu tiếng Việt bất kỳ (hoặc bấm nút <strong>AI</strong> nếu câu dài / nhiều khoản):
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {EXAMPLES.map((ex) => (
@@ -160,16 +260,70 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                           setRaw(ex);
                           inputRef.current?.focus();
                         }}
-                        className="px-3 py-1.5 rounded-full text-xs font-500 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+                        className="px-3 py-1.5 rounded-full text-xs font-500 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-text)] transition-colors"
                       >
                         {ex}
                       </button>
                     ))}
                   </div>
                 </div>
+              ) : aiItems ? (
+                /* Multi-transaction preview from AI */
+                <div className="space-y-2">
+                  <p className="text-xs font-700 text-[var(--color-accent-text)]">
+                    AI nhận diện được {aiItems.length} giao dịch:
+                  </p>
+                  {aiItems.map((it, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 rounded-[var(--radius-md)] bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2.5 text-xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CategoryIcon categoryId={it.categoryId} size={16} />
+                        <div className="min-w-0">
+                          <p className="font-600 text-[var(--color-text-primary)] truncate">
+                            {it.note || CATEGORIES[it.categoryId]?.name}
+                          </p>
+                          <p className="text-[11px] text-[var(--color-text-secondary)]">
+                            {CATEGORIES[it.categoryId]?.name} ·{" "}
+                            {wallets.find((w) => w.id === (it.walletId || defaultWalletId))?.name} ·{" "}
+                            {it.date}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span
+                          className={cn(
+                            "font-700 tabular-nums",
+                            it.type === "income"
+                              ? "text-[var(--color-income)]"
+                              : "text-[var(--color-expense)]"
+                          )}
+                        >
+                          {it.type === "income" ? "+" : "-"}
+                          {formatMoney(it.amount)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAiItems((prev) => {
+                              if (!prev) return null;
+                              const next = prev.filter((_, i) => i !== idx);
+                              return next.length > 0 ? next : null;
+                            })
+                          }
+                          aria-label="Bỏ giao dịch này"
+                          className="p-1 text-[var(--color-expense)] hover:bg-[var(--color-expense)]/10 rounded"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
+                /* Single transaction instant preview */
                 <div className="space-y-3">
-                  {/* Số tiền nhận diện */}
                   <div className="flex items-center justify-between rounded-[var(--radius-md)] bg-[var(--color-bg)] px-3.5 py-2.5 border border-[var(--color-border)]">
                     <div>
                       <p className="text-[11px] font-500 text-[var(--color-text-secondary)]">
@@ -188,13 +342,12 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                           {formatMoney(parsed.amount)}
                         </p>
                       ) : (
-                        <p className="text-sm font-500 text-[var(--color-text-secondary)]">
-                          Chưa thấy số tiền (vd: 35k, 1tr5, 50 nghìn...)
+                        <p className="text-xs font-500 text-[var(--color-text-secondary)]">
+                          Chưa thấy số tiền — gõ thêm (vd: 70k) hoặc bấm nút <strong>AI</strong>
                         </p>
                       )}
                     </div>
 
-                    {/* Toggle Thu / Chi */}
                     <button
                       type="button"
                       onClick={() => {
@@ -223,9 +376,8 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                     </button>
                   </div>
 
-                  {/* Preview Tags có thể chỉnh trực tiếp */}
+                  {/* Preview Tags */}
                   <div className="flex flex-wrap gap-2">
-                    {/* Tag Danh mục */}
                     <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg)] border border-[var(--color-border)] text-xs hover:border-[var(--color-accent)] cursor-pointer">
                       <CategoryIcon categoryId={effectiveCategory} size={14} />
                       <select
@@ -242,9 +394,8 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                       </select>
                     </label>
 
-                    {/* Tag Ví */}
                     <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg)] border border-[var(--color-border)] text-xs hover:border-[var(--color-accent)] cursor-pointer">
-                      <WalletIcon size={14} className="text-[var(--color-accent)]" />
+                      <WalletIcon size={14} className="text-[var(--color-accent-text)]" />
                       <select
                         value={effectiveWalletId}
                         onChange={(e) => setOverrideWallet(e.target.value)}
@@ -259,7 +410,6 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
                       </select>
                     </label>
 
-                    {/* Tag Ngày */}
                     <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg)] border border-[var(--color-border)] text-xs hover:border-[var(--color-accent)] cursor-pointer">
                       <Calendar size={14} className="text-[var(--color-text-secondary)]" />
                       <input
@@ -290,18 +440,20 @@ function QuickAddModalInner({ onClose }: { onClose: () => void }) {
             {/* Footer */}
             <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-bg)]/60 border-t border-[var(--color-border)]">
               <span className="text-[11px] text-[var(--color-text-secondary)] hidden sm:inline">
-                Phím tắt: <kbd className="px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-600">Ctrl+K</kbd> mở · <kbd className="px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-600">Enter</kbd> lưu
+                Bấm <strong>AI</strong> cho câu dài/nhiều món · <kbd className="px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-600">Enter</kbd> lưu
               </span>
               <button
                 type="submit"
-                disabled={!canSave}
+                disabled={!canSave || aiLoading}
                 className={cn(
-                  "ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-accent)] text-white text-xs font-700",
+                  "ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-accent)] text-[var(--color-accent-fg)] text-xs font-700",
                   "active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 )}
               >
                 <CornerDownLeft size={14} />
-                <span>Lưu giao dịch</span>
+                <span>
+                  {aiItems ? `Lưu tất cả (${aiItems.length})` : "Lưu giao dịch"}
+                </span>
               </button>
             </div>
           </form>
