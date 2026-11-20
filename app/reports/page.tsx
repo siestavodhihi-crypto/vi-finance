@@ -14,6 +14,7 @@ import {
 } from "@/lib/finance";
 import { buildMonthlyReport } from "@/lib/monthly-report";
 import { CategoryIcon } from "@/components/transactions/category-icon";
+import { AiCoachCard } from "@/components/reports/ai-coach-card";
 import {
   BarChart2,
   ChevronLeft,
@@ -178,6 +179,9 @@ export default function ReportsPage() {
           </p>
         </div>
       </div>
+
+      {/* Trợ lý AI đánh giá & nhắc nhở tiết kiệm */}
+      <AiCoachCard report={report} selectedMonth={selectedMonth} />
 
       {/* Lời nhắc ngắn gọn theo quy tắc */}
       <div className="card p-5 space-y-3">
