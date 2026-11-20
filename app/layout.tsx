@@ -1,7 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AppShell } from "@/components/layout/app-shell";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-be-vietnam-pro",
+});
 
 export const metadata: Metadata = {
   title: "Vàng — Quản lý tài chính cá nhân",
@@ -25,7 +33,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F5F4F0" },
@@ -39,8 +46,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <body className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)]">
+    <html lang="vi" className={beVietnamPro.variable} suppressHydrationWarning>
+      <body className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-x-hidden">
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useHydrated } from "@/lib/useHydrated";
-import { PageSkeleton } from "@/components/ui/skeleton";
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
 import {
   formatMoney,
   formatMoneyShort,
@@ -29,24 +30,28 @@ import {
   Plus,
   CalendarClock,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal";
 import { TransferModal } from "@/components/wallets/transfer-modal";
 import Link from "next/link";
+
+const Last14DaysBarChart = dynamic(
+  () => import("./dashboard-charts").then((m) => m.Last14DaysBarChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-44 w-full rounded-[var(--radius-md)]" />,
+  }
+);
+
+const CategoryDonutChart = dynamic(
+  () => import("./dashboard-charts").then((m) => m.CategoryDonutChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-52 w-full rounded-[var(--radius-md)]" />,
+  }
+);
 
 function AmountDisplay({
   amount,
@@ -136,7 +141,7 @@ export function Dashboard() {
           </button>
           <button
             onClick={() => setAddTxOpen(true)}
-            className="flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent)] px-3.5 py-2 text-xs font-600 text-white active:scale-95 transition-all shadow-sm"
+            className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 rounded-[var(--radius-md)] bg-[var(--color-accent)] px-3.5 py-2 text-xs font-700 text-[var(--color-accent-fg)] active:scale-95 transition-all shadow-sm"
           >
             <Plus size={16} strokeWidth={2} />
             <span>Ghi chép</span>
@@ -152,7 +157,7 @@ export function Dashboard() {
           </p>
           <Link
             href="/wallets"
-            className="text-xs font-500 text-[var(--color-accent)] hover:underline"
+            className="text-xs font-600 text-[var(--color-accent-text)] hover:underline"
           >
             Chi tiết ví ({wallets.length}) →
           </Link>
@@ -162,7 +167,7 @@ export function Dashboard() {
           <AmountDisplay
             amount={totalAssets}
             privacyMode={privacyMode}
-            className="text-4xl sm:text-5xl font-800 text-[var(--color-accent)] leading-none"
+            className="text-4xl sm:text-5xl font-800 text-[var(--color-accent-text)] leading-none"
           />
         </div>
 
@@ -332,43 +337,7 @@ export function Dashboard() {
         {!hasData ? (
           <EmptyChartState />
         ) : (
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barGap={2} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }}
-                  tickLine={false}
-                  axisLine={false}
-                  interval={2}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v: number) => formatMoneyShort(v)}
-                />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 shadow-[var(--shadow-md)] text-xs">
-                        <p className="font-600 text-[var(--color-text-primary)] mb-1">{label}</p>
-                        {payload.map((p) => (
-                          <p key={p.dataKey as string} style={{ color: p.color }}>
-                            {p.name === "income" ? "Thu: " : "Chi: "}
-                            {formatMoney(p.value as number)}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }}
-                />
-                <Bar dataKey="income" name="income" fill="var(--color-income)" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                <Bar dataKey="expense" name="expense" fill="var(--color-expense)" radius={[3, 3, 0, 0]} maxBarSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <Last14DaysBarChart data={chartData} />
         )}
       </div>
 
@@ -379,47 +348,11 @@ export function Dashboard() {
             <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
               Phân bổ chi tiêu tháng này
             </h2>
-            <Link href="/budget" className="text-xs font-500 text-[var(--color-accent)] hover:underline">
+            <Link href="/budget" className="text-xs font-600 text-[var(--color-accent-text)] hover:underline">
               Quản lý ngân sách →
             </Link>
           </div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={catStats}
-                  cx="40%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={2}
-                  dataKey="amount"
-                >
-                  {catStats.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend
-                  layout="vertical"
-                  align="right"
-                  verticalAlign="middle"
-                  content={() => (
-                    <ul className="space-y-1.5 text-xs max-h-48 overflow-y-auto pr-1">
-                      {catStats.slice(0, 6).map((s) => (
-                        <li key={s.categoryId} className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                          <span className="text-[var(--color-text-secondary)] truncate max-w-[85px]">{s.name}</span>
-                          <span className="font-600 text-[var(--color-text-primary)] tabular-nums ml-auto">
-                            {privacyMode ? "••" : `${s.percentage}%`}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <CategoryDonutChart data={catStats} privacyMode={privacyMode} />
         </div>
       )}
 

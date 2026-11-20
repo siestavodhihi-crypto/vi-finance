@@ -21,7 +21,7 @@ export function TopBar() {
         <ThemeToggle />
         <button
           onClick={() => setQuickAddOpen(true)}
-          className="ml-1 flex items-center gap-1 rounded-[var(--radius-md)] bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-600 text-white active:scale-95 transition-transform"
+          className="ml-1 flex items-center justify-center gap-1 min-h-[44px] rounded-[var(--radius-md)] bg-[var(--color-accent)] px-3 py-2 text-xs font-700 text-[var(--color-accent-fg)] active:scale-95 transition-transform"
           aria-label="Nhập nhanh giao dịch"
         >
           <Sparkles size={14} strokeWidth={2} />

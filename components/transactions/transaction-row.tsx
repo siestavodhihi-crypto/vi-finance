@@ -6,7 +6,7 @@ import { useFinanceStore } from "@/store/useFinanceStore";
 import { CategoryIcon } from "./category-icon";
 import { cn } from "@/lib/utils";
 import { Trash2, Pencil, ArrowLeftRight } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { EditTransactionModal } from "./edit-transaction-modal";
 
@@ -15,7 +15,10 @@ interface TransactionRowProps {
   showDate?: boolean;
 }
 
-export function TransactionRow({ transaction, showDate = true }: TransactionRowProps) {
+export const TransactionRow = memo(function TransactionRow({
+  transaction,
+  showDate = true,
+}: TransactionRowProps) {
   const { settings, deleteTransaction, wallets } = useFinanceStore();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -151,4 +154,4 @@ export function TransactionRow({ transaction, showDate = true }: TransactionRowP
       </Dialog.Root>
     </>
   );
-}
+});

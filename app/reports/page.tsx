@@ -1,27 +1,19 @@
 "use client";
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useHydrated } from "@/lib/useHydrated";
-import { PageSkeleton } from "@/components/ui/skeleton";
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
 import {
   filterByMonth,
   getCurrentMonth,
   getTotalIncome,
   getTotalExpense,
   formatMoney,
-  formatMoneyShort,
   formatMonth,
 } from "@/lib/finance";
 import { buildMonthlyReport } from "@/lib/monthly-report";
 import { CategoryIcon } from "@/components/transactions/category-icon";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import {
   BarChart2,
   ChevronLeft,
@@ -35,6 +27,14 @@ import {
 } from "lucide-react";
 import { addMonths, format, parseISO, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
+
+const SixMonthBarChart = dynamic(
+  () => import("@/components/reports/reports-chart").then((m) => m.SixMonthBarChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-48 w-full rounded-[var(--radius-md)]" />,
+  }
+);
 
 function ChangeBadge({
   value,
@@ -262,47 +262,12 @@ export default function ReportsPage() {
         )}
       </div>
 
-      {/* 6-month chart */}
+      {/* 6-month chart (lazy-loaded) */}
       <div className="card p-5">
         <h2 className="text-sm font-700 text-[var(--color-text-primary)] mb-4">
           Xu hướng 6 tháng gần đây
         </h2>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={months6} barGap={4} margin={{ left: -20 }}>
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: "var(--color-text-secondary)" }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v: number) => formatMoneyShort(v)}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 shadow-[var(--shadow-md)] text-xs space-y-1">
-                      <p className="font-600">{label}</p>
-                      {payload.map((p) => (
-                        <p key={p.dataKey as string} style={{ color: p.color }}>
-                          {p.name === "income" ? "Thu: " : "Chi: "}
-                          {formatMoney(p.value as number)}
-                        </p>
-                      ))}
-                    </div>
-                  );
-                }}
-              />
-              <Bar dataKey="income" name="income" fill="var(--color-income)" radius={[3, 3, 0, 0]} maxBarSize={22} />
-              <Bar dataKey="expense" name="expense" fill="var(--color-expense)" radius={[3, 3, 0, 0]} maxBarSize={22} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <SixMonthBarChart data={months6} />
       </div>
     </div>
   );

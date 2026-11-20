@@ -4,13 +4,15 @@ import { useHydrated } from "@/lib/useHydrated";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/lib/finance";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { LogIn, LogOut, Cloud, Database } from "lucide-react";
+import { LogIn, LogOut, Cloud, Database, Compass } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useUIStore } from "@/store/useUIStore";
 
 export default function SettingsPage() {
   const hydrated = useHydrated();
   const router = useRouter();
+  const setOnboardingOpen = useUIStore((s) => s.setOnboardingOpen);
   const { settings, updateSettings, wallets, user, dataMode } = useFinanceStore();
 
   const totalAssets = wallets.reduce((s, w) => s + w.balance, 0);
@@ -106,19 +108,38 @@ export default function SettingsPage() {
           </div>
           <button
             onClick={() => updateSettings({ privacyMode: !settings.privacyMode })}
-            className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
+            aria-label="Bật tắt chế độ riêng tư ẩn số tiền"
+            className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
               settings.privacyMode ? "bg-[var(--color-accent)]" : "bg-[var(--color-border)]"
             }`}
             role="switch"
             aria-checked={settings.privacyMode}
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                settings.privacyMode ? "translate-x-5" : "translate-x-0.5"
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                settings.privacyMode ? "translate-x-6" : "translate-x-1"
               }`}
             />
           </button>
         </div>
+      </div>
+
+      {/* Onboarding re-run */}
+      <div className="card p-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-600 text-[var(--color-text-primary)]">
+            Hướng dẫn thiết lập nhanh (3 bước)
+          </p>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Nhập lại số dư ví, hóa đơn cố định và ngân sách đầu tiên
+          </p>
+        </div>
+        <button
+          onClick={() => setOnboardingOpen(true)}
+          className="min-h-[44px] px-3.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] inline-flex items-center gap-1.5 flex-shrink-0"
+        >
+          <Compass size={15} /> Mở lại
+        </button>
       </div>
 
       {/* App info */}
