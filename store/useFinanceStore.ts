@@ -196,7 +196,10 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
         syncLoading: false,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Không tải được dữ liệu";
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Không tải được dữ liệu";
       toast.error(`Lỗi tải dữ liệu Supabase: ${msg}`);
       set({ syncLoading: false });
     }

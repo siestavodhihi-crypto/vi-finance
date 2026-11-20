@@ -135,6 +135,11 @@ create index if not exists idx_goals_user on public.saving_goals(user_id);
 create index if not exists idx_debts_user on public.debts(user_id);
 create index if not exists idx_splits_user on public.split_bills(user_id);
 
+-- Cấp quyền truy cập schema public cho role authenticated (vẫn chịu sự bảo vệ chặt của RLS)
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+alter default privileges in schema public grant select, insert, update, delete on tables to authenticated;
+
 -- ============================================================================
 -- 3. ROW LEVEL SECURITY (RLS) — BẮT BUỘC CHO MỌI BẢNG
 -- ============================================================================
