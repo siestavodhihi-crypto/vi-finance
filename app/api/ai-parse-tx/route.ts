@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import {
   AiParseTxRequestSchema,
@@ -7,6 +6,10 @@ import {
   parseAiQuickAddResponse,
 } from "@/lib/ai-quick-add";
 import { SlidingWindowRateLimiter } from "@/lib/rate-limit";
+import {
+  callGeminiStructuredJson,
+  mapGeminiErrorToUserResponse,
+} from "@/lib/gemini-server";
 
 export const runtime = "nodejs";
 
@@ -99,16 +102,14 @@ Hãy trích xuất 1 hoặc nhiều giao dịch (nếu người dùng kể nhi�
 - Tính đúng ngày YYYY-MM-DD nếu câu có "hôm qua", "hôm kia", "tuần trước"...; mặc định là "${today}".`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.5-flash-lite",
-      store: false,
+    const outputText = await callGeminiStructuredJson({
+      apiKey,
       input: prompt,
-      response_format: AI_QUICK_ADD_JSON_SCHEMA,
+      schema: AI_QUICK_ADD_JSON_SCHEMA,
     });
 
     const parsed = parseAiQuickAddResponse(
-      interaction.output_text,
+      outputText,
       wallets.map((w) => w.id),
       today
     );
@@ -124,9 +125,13 @@ Hãy trích xuất 1 hoặc nhiều giao dịch (nếu người dùng kể nhi�
     });
   } catch (err: unknown) {
     console.error("[ai-parse-tx] Gemini API error:", err);
+    const mapped = mapGeminiErrorToUserResponse(
+      err,
+      "Không thể kết nối AI lúc này. Bạn vẫn có thể lưu bằng nhận diện nhanh!"
+    );
     return NextResponse.json(
-      { ok: false, error: "Không thể kết nối AI lúc này. Bạn vẫn có thể lưu bằng nhận diện nhanh!" },
-      { status: 502 }
+      { ok: false, error: mapped.error },
+      { status: mapped.status }
     );
   }
 }

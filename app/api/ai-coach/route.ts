@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import {
   AiCoachInputSchema,
@@ -7,6 +6,10 @@ import {
   parseAiCoachResponse,
 } from "@/lib/ai-coach";
 import { SlidingWindowRateLimiter } from "@/lib/rate-limit";
+import {
+  callGeminiStructuredJson,
+  mapGeminiErrorToUserResponse,
+} from "@/lib/gemini-server";
 
 export const runtime = "nodejs";
 
@@ -94,15 +97,13 @@ Dưới đây là số liệu tổng hợp (đơn vị: VNĐ) trong tháng ${d.m
 Hãy đánh giá tiến trình dùng tiền và đưa lời khuyên tiết kiệm sát thực tế sinh viên, trả về DUY NHẤT JSON đúng schema.`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.5-flash-lite",
-      store: false,
+    const outputText = await callGeminiStructuredJson({
+      apiKey,
       input: prompt,
-      response_format: AI_COACH_JSON_SCHEMA,
+      schema: AI_COACH_JSON_SCHEMA,
     });
 
-    const parsed = parseAiCoachResponse(interaction.output_text);
+    const parsed = parseAiCoachResponse(outputText);
     if (!parsed.ok) {
       return NextResponse.json({ ok: false, error: parsed.error }, { status: 422 });
     }
@@ -114,12 +115,13 @@ Hãy đánh giá tiến trình dùng tiền và đưa lời khuyên tiết kiệ
     });
   } catch (err: unknown) {
     console.error("[ai-coach] Gemini API error:", err);
+    const mapped = mapGeminiErrorToUserResponse(
+      err,
+      "Không thể kết nối Trợ lý AI lúc này. Vui lòng thử lại sau nhé."
+    );
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Không thể kết nối Trợ lý AI lúc này. Vui lòng thử lại sau nhé.",
-      },
-      { status: 502 }
+      { ok: false, error: mapped.error },
+      { status: mapped.status }
     );
   }
 }

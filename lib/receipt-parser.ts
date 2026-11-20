@@ -161,8 +161,8 @@ export const RECEIPT_RESPONSE_JSON_SCHEMA = {
       description: "Tên cửa hàng, quán ăn hoặc nhà cung cấp trên hóa đơn",
     },
     date: {
-      type: ["string", "null"],
-      description: "Ngày giao dịch định dạng YYYY-MM-DD, hoặc null nếu không đọc được",
+      type: "string",
+      description: "Ngày giao dịch định dạng YYYY-MM-DD (bỏ qua nếu không đọc được trên hóa đơn)",
     },
     total: {
       type: "number",
@@ -185,5 +185,5 @@ export const RECEIPT_RESPONSE_JSON_SCHEMA = {
         "Một trong các giá trị: food, transport, shopping, entertainment, health, education, rent, utilities, internet, other",
     },
   },
-  required: ["merchant", "date", "total", "items", "suggested_category"],
+  required: ["merchant", "total", "items", "suggested_category"],
 };

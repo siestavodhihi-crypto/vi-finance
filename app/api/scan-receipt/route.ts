@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import {
@@ -7,6 +6,10 @@ import {
   RECEIPT_RESPONSE_JSON_SCHEMA,
 } from "@/lib/receipt-parser";
 import { receiptScanLimiter } from "@/lib/rate-limit";
+import {
+  callGeminiStructuredJson,
+  mapGeminiErrorToUserResponse,
+} from "@/lib/gemini-server";
 
 export const runtime = "nodejs";
 
@@ -149,12 +152,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 5. Gọi Gemini API (model gemini-3.5-flash-lite — nhanh, rẻ, hỗ trợ gói miễn phí; store: false để bảo vệ riêng tư)
+  // 5. Gọi Gemini API (store: false để bảo vệ riêng tư)
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.5-flash-lite",
-      store: false,
+    const outputText = await callGeminiStructuredJson({
+      apiKey,
       input: [
         { type: "text", text: RECEIPT_PROMPT },
         {
@@ -163,10 +164,10 @@ export async function POST(req: NextRequest) {
           mime_type: "image/jpeg",
         },
       ],
-      response_format: RECEIPT_RESPONSE_JSON_SCHEMA,
+      schema: RECEIPT_RESPONSE_JSON_SCHEMA,
     });
 
-    const parsed = parseReceiptResponse(interaction.output_text);
+    const parsed = parseReceiptResponse(outputText);
     if (!parsed.ok) {
       return NextResponse.json({ ok: false, error: parsed.error }, { status: 422 });
     }
@@ -178,13 +179,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("[scan-receipt] Gemini API error:", err);
+    const mapped = mapGeminiErrorToUserResponse(
+      err,
+      "Không thể kết nối dịch vụ đọc hóa đơn lúc này. Vui lòng thử lại hoặc nhập tay."
+    );
     return NextResponse.json(
-      {
-        ok: false,
-        error:
-          "Không thể kết nối dịch vụ đọc hóa đơn lúc này. Vui lòng thử lại hoặc nhập tay.",
-      },
-      { status: 502 }
+      { ok: false, error: mapped.error },
+      { status: mapped.status }
     );
   }
 }
