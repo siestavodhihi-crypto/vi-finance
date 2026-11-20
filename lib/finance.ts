@@ -27,12 +27,56 @@ import {
 } from "date-fns";
 import { vi } from "date-fns/locale";
 
+// ── Vietnam Timezone (UTC+7 / Asia/Ho_Chi_Minh) ─────────────
+
+export const VIETNAM_TIMEZONE = "Asia/Ho_Chi_Minh";
+
+export interface CalendarDateParts {
+  year: number;
+  month: number; // 1-12
+  day: number; // 1-31
+}
+
+/**
+ * Trích năm/tháng/ngày theo giờ Việt Nam (UTC+7) — tránh lệch ngày khi server chạy UTC.
+ */
+export function getVietnamDateParts(date: Date = new Date()): CalendarDateParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: VIETNAM_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year = Number(parts.find((p) => p.type === "year")?.value ?? date.getFullYear());
+  const month = Number(parts.find((p) => p.type === "month")?.value ?? date.getMonth() + 1);
+  const day = Number(parts.find((p) => p.type === "day")?.value ?? date.getDate());
+  return { year, month, day };
+}
+
+/** Số ngày trong một tháng (hỗ trợ chuẩn năm nhuận: tháng 2 có 29 ngày) */
+export function getDaysInCalendarMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+export function getVietnamDateString(date: Date = new Date()): string {
+  const { year, month, day } = getVietnamDateParts(date);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getVietnamMonthString(date: Date = new Date()): string {
+  const { year, month } = getVietnamDateParts(date);
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
 // ── Format ──────────────────────────────────────────────────
 
 /**
  * Format a VND amount: 1500000 → "1.500.000 ₫"
+ * An toàn với NaN / Infinity và số tiền rất lớn.
  */
 export function formatMoney(amount: number): string {
+  if (!Number.isFinite(amount)) return "0 ₫";
   const isNeg = amount < 0;
   const formatted = new Intl.NumberFormat("vi-VN", {
     style: "decimal",
@@ -45,6 +89,7 @@ export function formatMoney(amount: number): string {
  * Short format: 1500000 → "1.5 tr", 1200000000 → "1.2 tỷ"
  */
 export function formatMoneyShort(amount: number): string {
+  if (!Number.isFinite(amount)) return "0";
   const abs = Math.abs(amount);
   const sign = amount < 0 ? "-" : "";
   if (abs >= 1_000_000_000) {
@@ -279,13 +324,13 @@ export function calculateSafeToSpend(
 }
 
 /**
- * Tính số ngày còn lại trong tháng (tính cả ngày hiện tại)
- * Ca biên ngày cuối tháng: trả về đúng 1
+ * Tính số ngày còn lại trong tháng theo giờ Việt Nam UTC+7 (tính cả ngày hiện tại).
+ * Hỗ trợ chính xác tháng 2 năm nhuận (29 ngày) và ngày cuối tháng (trả về 1).
  */
 export function getDaysRemainingInMonth(date: Date = new Date()): number {
-  const lastDay = endOfMonth(date).getDate(); // 28, 29, 30 hoặc 31
-  const currentDay = date.getDate();
-  const diff = lastDay - currentDay + 1;
+  const { year, month, day } = getVietnamDateParts(date);
+  const lastDay = getDaysInCalendarMonth(year, month);
+  const diff = lastDay - day + 1;
   return Math.max(1, diff);
 }
 
@@ -300,7 +345,7 @@ export function getSafeToSpendDetail(params: {
   currentMonth?: string;
 }): SafeToSpendDetail {
   const now = params.currentDate ?? new Date();
-  const monthKey = params.currentMonth ?? format(now, "yyyy-MM");
+  const monthKey = params.currentMonth ?? getVietnamMonthString(now);
 
   // 1. Số dư ví khả dụng (ví không bị khóa)
   const availableBalance = params.wallets
@@ -360,7 +405,7 @@ export function getDailyRemaining(
 // ── Helpers ──────────────────────────────────────────────────
 
 export function getCurrentMonth(): string {
-  return format(new Date(), "yyyy-MM");
+  return getVietnamMonthString(new Date());
 }
 
 export function groupTransactionsByDate(

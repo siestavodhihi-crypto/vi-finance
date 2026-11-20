@@ -88,6 +88,11 @@ const CASES: Case[] = [
   { input: "2 triệu 5 tiền học", amount: 2_500_000, category: "education" },
   { input: "nhận tiền Minh trả 50k", amount: 50_000, type: "income", category: "other" },
   { input: "abc", amount: null, category: "other", type: "expense" },
+  { input: "", amount: null, category: "other", type: "expense", note: "" },
+  { input: "   ", amount: null, category: "other", type: "expense", note: "" },
+  { input: "mua đồ mà quên giá", amount: null, category: "shopping", type: "expense" },
+  { input: "0k trà đá", amount: null, category: "food", type: "expense" },
+  { input: "tiền thưởng dự án 1.2 tỷ ck", amount: 1_200_000_000, type: "income", category: "salary", wallet: "bank" },
 ];
 
 describe(`parseQuickAdd — ${CASES.length} câu mẫu tiếng Việt`, () => {
@@ -108,5 +113,13 @@ describe(`parseQuickAdd — ${CASES.length} câu mẫu tiếng Việt`, () => {
   it("nhận diện theo tên ví người dùng tự đặt", () => {
     const custom: Wallet[] = [{ id: "w9", name: "Thẻ sinh viên", balance: 0, icon: "Wallet", color: "#000" }];
     expect(parseQuickAdd("cơm 30k thẻ sinh viên", custom).walletId).toBe("w9");
+  });
+
+  it("xử lý ghi chú rất dài (> 1000 ký tự) nhanh chóng, không bị treo", () => {
+    const longNote = "mua đồ siêu thị " + "rất nhiều món ngon ".repeat(80) + " 150k momo";
+    const r = parseQuickAdd(longNote, WALLETS);
+    expect(r.amount).toBe(150_000);
+    expect(r.walletId).toBe("momo");
+    expect(r.note.length).toBeGreaterThan(500);
   });
 });

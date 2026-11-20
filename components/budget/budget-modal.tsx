@@ -1,12 +1,11 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, PieChart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { EXPENSE_CATEGORIES } from "@/lib/constants";
 import { Budget, CategoryId } from "@/types";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/finance";
 
 interface BudgetModalProps {
   open: boolean;
@@ -15,7 +14,12 @@ interface BudgetModalProps {
   currentMonth: string;
 }
 
-export function BudgetModal({
+export function BudgetModal(props: BudgetModalProps) {
+  if (!props.open) return null;
+  return <BudgetModalInner key={props.budgetToEdit?.id ?? "new"} {...props} />;
+}
+
+function BudgetModalInner({
   open,
   onClose,
   budgetToEdit,
@@ -23,10 +27,6 @@ export function BudgetModal({
 }: BudgetModalProps) {
   const { budgets, addBudget, updateBudget } = useFinanceStore();
 
-  const [categoryId, setCategoryId] = useState<CategoryId>("food");
-  const [limit, setLimit] = useState("");
-
-  // Lọc các category chưa có ngân sách trong tháng này nếu đang thêm mới
   const existingCategoryIds = budgets
     .filter((b) => b.month === currentMonth && (!budgetToEdit || b.id !== budgetToEdit.id))
     .map((b) => b.categoryId);
@@ -35,17 +35,10 @@ export function BudgetModal({
     (c) => !existingCategoryIds.includes(c.id)
   );
 
-  useEffect(() => {
-    if (budgetToEdit) {
-      setCategoryId(budgetToEdit.categoryId);
-      setLimit(String(budgetToEdit.limit));
-    } else {
-      if (availableCategories[0]) {
-        setCategoryId(availableCategories[0].id);
-      }
-      setLimit("");
-    }
-  }, [budgetToEdit, open]);
+  const [categoryId, setCategoryId] = useState<CategoryId>(
+    budgetToEdit?.categoryId ?? availableCategories[0]?.id ?? "food"
+  );
+  const [limit, setLimit] = useState(budgetToEdit ? String(budgetToEdit.limit) : "");
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

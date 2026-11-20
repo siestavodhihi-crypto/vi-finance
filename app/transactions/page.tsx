@@ -182,7 +182,7 @@ export default function TransactionsPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setTypeFilter(tab.id as any)}
+              onClick={() => setTypeFilter(tab.id as "all" | TransactionType)}
               className={cn(
                 "px-3 py-1.5 rounded-full whitespace-nowrap font-500 transition-colors",
                 typeFilter === tab.id
@@ -206,7 +206,7 @@ export default function TransactionsPage() {
                 </label>
                 <select
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value as any)}
+                  onChange={(e) => setCategoryFilter(e.target.value as "all" | CategoryId)}
                   className="w-full h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-xs text-[var(--color-text-primary)]"
                 >
                   <option value="all">Tất cả danh mục</option>

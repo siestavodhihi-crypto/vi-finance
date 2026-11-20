@@ -14,12 +14,9 @@ import {
   Lock,
   Pencil,
   Trash2,
-  Wallet as WalletIcon,
-  CreditCard,
   ShieldCheck,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { cn } from "@/lib/utils";
 
 export default function WalletsPage() {
   const hydrated = useHydrated();

@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   calculateSafeToSpend,
   getDaysRemainingInMonth,
+  getDaysInCalendarMonth,
+  getVietnamDateString,
+  getVietnamMonthString,
   getSafeToSpendDetail,
   getTotalIncome,
   getTotalExpense,
@@ -276,5 +279,66 @@ describe("Format tiền", () => {
     expect(formatMoneyShort(1_500_000)).toBe("1.5 tr");
     expect(formatMoneyShort(50_000)).toBe("50k");
     expect(formatMoneyShort(2_000_000_000)).toBe("2.0 tỷ");
+  });
+
+  it("Xử lý số tiền rất lớn và giá trị không hữu hạn (NaN / Infinity)", () => {
+    expect(formatMoney(999_999_999_999)).toBe("999.999.999.999 ₫");
+    expect(formatMoneyShort(10_000_000_000)).toBe("10.0 tỷ");
+    expect(formatMoney(NaN)).toBe("0 ₫");
+    expect(formatMoney(Infinity)).toBe("0 ₫");
+    expect(formatMoneyShort(NaN)).toBe("0");
+
+    const hugeSafe = calculateSafeToSpend({
+      availableBalance: 999_000_000_000,
+      unpaidBills: 0,
+      lockedSavings: 0,
+      daysRemaining: 10,
+    });
+    expect(hugeSafe).toBe(99_900_000_000);
+    expect(Number.isFinite(hugeSafe)).toBe(true);
+  });
+});
+
+describe("Trường hợp biên thời gian: Múi giờ Việt Nam (UTC+7) & Tháng 2 nhuận", () => {
+  it("Chuyển đổi đúng sang ngày/tháng Việt Nam UTC+7 khi thời điểm UTC ở cuối ngày trước", () => {
+    // 2026-11-30 18:00:00 UTC = 2026-12-01 01:00:00 giờ Việt Nam (UTC+7)
+    const lateUtc = new Date("2026-11-30T18:00:00Z");
+    expect(getVietnamDateString(lateUtc)).toBe("2026-12-01");
+    expect(getVietnamMonthString(lateUtc)).toBe("2026-12");
+    // Tháng 12 có 31 ngày -> ngày 01/12 còn đủ 31 ngày
+    expect(getDaysRemainingInMonth(lateUtc)).toBe(31);
+  });
+
+  it("Tính đúng tháng 2 năm nhuận (2024: 29 ngày) và năm không nhuận (2026: 28 ngày)", () => {
+    expect(getDaysInCalendarMonth(2024, 2)).toBe(29);
+    expect(getDaysInCalendarMonth(2026, 2)).toBe(28);
+    expect(getDaysInCalendarMonth(2000, 2)).toBe(29); // chia hết cho 400
+    expect(getDaysInCalendarMonth(2100, 2)).toBe(28); // chia hết cho 100 nhưng không cho 400
+
+    // Năm nhuận 2024
+    expect(getDaysRemainingInMonth(new Date("2024-02-01T05:00:00Z"))).toBe(29);
+    expect(getDaysRemainingInMonth(new Date("2024-02-29T05:00:00Z"))).toBe(1);
+
+    // Năm không nhuận 2026
+    expect(getDaysRemainingInMonth(new Date("2026-02-01T05:00:00Z"))).toBe(28);
+    expect(getDaysRemainingInMonth(new Date("2026-02-28T05:00:00Z"))).toBe(1);
+  });
+
+  it("Hóa đơn ĐÃ TRẢ trong tháng KHÔNG bị trừ lại vào Safe-to-Spend", () => {
+    const wallets: Wallet[] = [
+      { id: "w1", name: "Ngân hàng", balance: 3_000_000, icon: "CreditCard", color: "#fff", isLocked: false },
+    ];
+    const bills: RecurringBill[] = [
+      { id: "b1", name: "Tiền trọ", amount: 2_500_000, categoryId: "rent", dueDay: 5, walletId: "w1", paidMonths: ["2026-11"] },
+    ];
+    const detail = getSafeToSpendDetail({
+      wallets,
+      recurringBills: bills,
+      currentDate: new Date("2026-11-21T05:00:00Z"), // còn 10 ngày (21..30)
+      currentMonth: "2026-11",
+    });
+    expect(detail.unpaidBills).toBe(0);
+    expect(detail.pool).toBe(3_000_000);
+    expect(detail.dailyAmount).toBe(300_000);
   });
 });

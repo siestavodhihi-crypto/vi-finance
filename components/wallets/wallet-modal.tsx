@@ -1,7 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Wallet as WalletIcon, Lock } from "lucide-react";
-import { useState, useEffect } from "react";
+import { X, Lock } from "lucide-react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { Wallet } from "@/types";
 import { cn } from "@/lib/utils";
@@ -12,36 +12,24 @@ interface WalletModalProps {
   walletToEdit?: Wallet | null;
 }
 
-const WALLET_ICONS = ["Wallet", "CreditCard", "Smartphone", "PiggyBank", "Landmark"];
 const WALLET_COLORS = ["#C8A44A", "#2D7D5F", "#D82D8B", "#8B6F4A", "#3B82F6", "#7C6FCD"];
 
-export function WalletModal({ open, onClose, walletToEdit }: WalletModalProps) {
+export function WalletModal(props: WalletModalProps) {
+  if (!props.open) return null;
+  return <WalletModalInner key={props.walletToEdit?.id ?? "new"} {...props} />;
+}
+
+function WalletModalInner({ open, onClose, walletToEdit }: WalletModalProps) {
   const { addWallet, updateWallet } = useFinanceStore();
 
-  const [name, setName] = useState("");
-  const [initialBalance, setInitialBalance] = useState("");
-  const [icon, setIcon] = useState("Wallet");
-  const [color, setColor] = useState("#C8A44A");
-  const [isLocked, setIsLocked] = useState(false);
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    if (walletToEdit) {
-      setName(walletToEdit.name);
-      setInitialBalance(String(walletToEdit.initialBalance ?? walletToEdit.balance));
-      setIcon(walletToEdit.icon);
-      setColor(walletToEdit.color);
-      setIsLocked(Boolean(walletToEdit.isLocked));
-      setNote(walletToEdit.note || "");
-    } else {
-      setName("");
-      setInitialBalance("");
-      setIcon("Wallet");
-      setColor("#C8A44A");
-      setIsLocked(false);
-      setNote("");
-    }
-  }, [walletToEdit, open]);
+  const [name, setName] = useState(walletToEdit?.name ?? "");
+  const [initialBalance, setInitialBalance] = useState(
+    walletToEdit ? String(walletToEdit.initialBalance ?? walletToEdit.balance) : ""
+  );
+  const [icon] = useState(walletToEdit?.icon ?? "Wallet");
+  const [color, setColor] = useState(walletToEdit?.color ?? "#C8A44A");
+  const [isLocked, setIsLocked] = useState(Boolean(walletToEdit?.isLocked));
+  const [note, setNote] = useState(walletToEdit?.note ?? "");
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

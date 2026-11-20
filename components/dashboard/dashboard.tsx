@@ -25,7 +25,6 @@ import {
   TrendingDown,
   TrendingUp,
   ShieldCheck,
-  AlertTriangle,
   Lock,
   Plus,
   CalendarClock,
@@ -66,7 +65,7 @@ function AmountDisplay({
 
 export function Dashboard() {
   const hydrated = useHydrated();
-  const { transactions, wallets, settings, budgets, recurringBills } = useFinanceStore();
+  const { transactions, wallets, settings, recurringBills } = useFinanceStore();
   const { privacyMode, dailyLimit } = settings;
 
   const [addTxOpen, setAddTxOpen] = useState(false);

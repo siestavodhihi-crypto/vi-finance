@@ -20,7 +20,7 @@ import { TransactionType, CategoryId } from "@/types";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/transactions/category-icon";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, getVietnamDateString } from "@/lib/finance";
 import { ParsedReceipt } from "@/lib/receipt-parser";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -32,7 +32,12 @@ interface AddTransactionModalProps {
   defaultType?: TransactionType;
 }
 
-export function AddTransactionModal({
+export function AddTransactionModal(props: AddTransactionModalProps) {
+  if (!props.open) return null;
+  return <AddTransactionModalInner {...props} />;
+}
+
+function AddTransactionModalInner({
   open,
   onClose,
   defaultType = "expense",
@@ -46,7 +51,7 @@ export function AddTransactionModal({
   const [categoryId, setCategoryId] = useState<CategoryId>("food");
   const [walletId, setWalletId] = useState(wallets[0]?.id ?? "");
   const [note, setNote] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => getVietnamDateString());
   const [submitting, setSubmitting] = useState(false);
 
   // Receipt scanning state
@@ -61,22 +66,12 @@ export function AddTransactionModal({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
+  // Dọn object URL khi unmount để tránh rò rỉ bộ nhớ
   useEffect(() => {
-    if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
-      setWalletId((prev) => prev || wallets[0]?.id || "");
-    } else {
-      // Dọn bộ nhớ ảnh xem trước khi đóng modal (không lưu ảnh sau khi đọc xong)
+    return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-      setReceiptFile(null);
-      setAttachReceipt(false);
-      setScanning(false);
-      setScanError(null);
-      setScannedResult(null);
-      setShowScanner(false);
-    }
-  }, [open, wallets]); // eslint-disable-line react-hooks/exhaustive-deps
+    };
+  }, [previewUrl]);
 
   const clearReceipt = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);

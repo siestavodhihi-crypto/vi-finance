@@ -1,8 +1,9 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
+import { getVietnamDateString } from "@/lib/finance";
 import { DebtDirection } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -11,22 +12,18 @@ interface DebtModalProps {
   onClose: () => void;
 }
 
-export function DebtModal({ open, onClose }: DebtModalProps) {
+export function DebtModal(props: DebtModalProps) {
+  if (!props.open) return null;
+  return <DebtModalInner {...props} />;
+}
+
+function DebtModalInner({ open, onClose }: DebtModalProps) {
   const { addDebt } = useFinanceStore();
   const [direction, setDirection] = useState<DebtDirection>("they_owe");
   const [person, setPerson] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [date, setDate] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setPerson("");
-      setAmount("");
-      setNote("");
-      setDate(new Date().toISOString().slice(0, 10));
-    }
-  }, [open]);
+  const [date, setDate] = useState(() => getVietnamDateString());
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

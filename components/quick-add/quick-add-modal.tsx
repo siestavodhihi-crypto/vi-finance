@@ -30,16 +30,6 @@ const EXAMPLES = [
 
 export function QuickAddModal() {
   const { quickAddOpen, setQuickAddOpen, toggleQuickAdd } = useUIStore();
-  const { wallets, addTransaction } = useFinanceStore();
-
-  const [raw, setRaw] = useState("");
-  const [overrideType, setOverrideType] = useState<"income" | "expense" | null>(null);
-  const [overrideCategory, setOverrideCategory] = useState<CategoryId | null>(null);
-  const [overrideWallet, setOverrideWallet] = useState<string | null>(null);
-  const [overrideDate, setOverrideDate] = useState<string | null>(null);
-  const [overrideNote, setOverrideNote] = useState<string | null>(null);
-
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Phím tắt toàn cục Ctrl+K / Cmd+K
   useEffect(() => {
@@ -53,18 +43,26 @@ export function QuickAddModal() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [toggleQuickAdd]);
 
-  // Reset khi mở lại modal
+  if (!quickAddOpen) return null;
+  return <QuickAddModalInner onClose={() => setQuickAddOpen(false)} />;
+}
+
+function QuickAddModalInner({ onClose }: { onClose: () => void }) {
+  const { wallets, addTransaction } = useFinanceStore();
+
+  const [raw, setRaw] = useState("");
+  const [overrideType, setOverrideType] = useState<"income" | "expense" | null>(null);
+  const [overrideCategory, setOverrideCategory] = useState<CategoryId | null>(null);
+  const [overrideWallet, setOverrideWallet] = useState<string | null>(null);
+  const [overrideDate, setOverrideDate] = useState<string | null>(null);
+  const [overrideNote, setOverrideNote] = useState<string | null>(null);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    if (quickAddOpen) {
-      setRaw("");
-      setOverrideType(null);
-      setOverrideCategory(null);
-      setOverrideWallet(null);
-      setOverrideDate(null);
-      setOverrideNote(null);
-      setTimeout(() => inputRef.current?.focus(), 30);
-    }
-  }, [quickAddOpen]);
+    const id = setTimeout(() => inputRef.current?.focus(), 30);
+    return () => clearTimeout(id);
+  }, []);
 
   const parsed = useMemo(() => parseQuickAdd(raw, wallets), [raw, wallets]);
 
@@ -99,11 +97,11 @@ export function QuickAddModal() {
       date: `${effectiveDate}T${nowTime}`,
     });
 
-    setQuickAddOpen(false);
+    onClose();
   };
 
   return (
-    <Dialog.Root open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+    <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
         <Dialog.Content

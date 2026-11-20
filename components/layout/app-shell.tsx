@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { QuickAddModal } from "@/components/quick-add/quick-add-modal";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { NetworkBanner } from "@/components/ui/network-banner";
 import { useFinanceStore } from "@/store/useFinanceStore";
 
 const AUTH_PATHS = ["/login", "/auth/callback"];
@@ -14,11 +15,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const syncLoading = useFinanceStore((s) => s.syncLoading);
 
   if (AUTH_PATHS.includes(pathname)) {
-    return <>{children}</>;
+    return (
+      <>
+        <NetworkBanner />
+        {children}
+      </>
+    );
   }
 
   return (
     <>
+      <NetworkBanner />
       <Sidebar />
       <TopBar />
       <main className="md:ml-56 min-h-screen">

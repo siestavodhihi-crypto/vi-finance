@@ -1,7 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Users, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { ME, splitDebts, splitEqual, splitItemized } from "@/lib/split";
 import { formatMoney } from "@/lib/finance";
@@ -13,7 +13,12 @@ interface SplitModalProps {
   onClose: () => void;
 }
 
-export function SplitModal({ open, onClose }: SplitModalProps) {
+export function SplitModal(props: SplitModalProps) {
+  if (!props.open) return null;
+  return <SplitModalInner {...props} />;
+}
+
+function SplitModalInner({ open, onClose }: SplitModalProps) {
   const { addSplitBill } = useFinanceStore();
 
   const [title, setTitle] = useState("");
@@ -24,21 +29,8 @@ export function SplitModal({ open, onClose }: SplitModalProps) {
   const [equalTotal, setEqualTotal] = useState("");
   const [sharedFee, setSharedFee] = useState("");
   const [items, setItems] = useState<SplitItem[]>([
-    { id: "i1", name: "Nồi lẩu chung", amount: 0, sharedBy: [] },
+    { id: "i1", name: "Món chung", amount: 0, sharedBy: [] },
   ]);
-
-  useEffect(() => {
-    if (open) {
-      setTitle("");
-      setMode("equal");
-      setMembers([ME, "Minh", "Lan"]);
-      setNewMember("");
-      setPayer(ME);
-      setEqualTotal("");
-      setSharedFee("");
-      setItems([{ id: "i1", name: "Món chung", amount: 0, sharedBy: [] }]);
-    }
-  }, [open]);
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

@@ -1,7 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, CalendarClock } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { EXPENSE_CATEGORIES } from "@/lib/constants";
 import { RecurringBill, CategoryId } from "@/types";
@@ -13,33 +13,20 @@ interface BillModalProps {
   billToEdit?: RecurringBill | null;
 }
 
-export function BillModal({ open, onClose, billToEdit }: BillModalProps) {
+export function BillModal(props: BillModalProps) {
+  if (!props.open) return null;
+  return <BillModalInner key={props.billToEdit?.id ?? "new"} {...props} />;
+}
+
+function BillModalInner({ open, onClose, billToEdit }: BillModalProps) {
   const { wallets, addBill, updateBill } = useFinanceStore();
 
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState<CategoryId>("rent");
-  const [dueDay, setDueDay] = useState(5);
-  const [walletId, setWalletId] = useState(wallets[0]?.id ?? "");
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    if (billToEdit) {
-      setName(billToEdit.name);
-      setAmount(String(billToEdit.amount));
-      setCategoryId(billToEdit.categoryId);
-      setDueDay(billToEdit.dueDay);
-      setWalletId(billToEdit.walletId);
-      setNote(billToEdit.note || "");
-    } else {
-      setName("");
-      setAmount("");
-      setCategoryId("rent");
-      setDueDay(5);
-      setWalletId(wallets[0]?.id ?? "");
-      setNote("");
-    }
-  }, [billToEdit, open, wallets]);
+  const [name, setName] = useState(billToEdit?.name ?? "");
+  const [amount, setAmount] = useState(billToEdit ? String(billToEdit.amount) : "");
+  const [categoryId, setCategoryId] = useState<CategoryId>(billToEdit?.categoryId ?? "rent");
+  const [dueDay, setDueDay] = useState(billToEdit?.dueDay ?? 5);
+  const [walletId, setWalletId] = useState(billToEdit?.walletId ?? wallets[0]?.id ?? "");
+  const [note, setNote] = useState(billToEdit?.note ?? "");
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

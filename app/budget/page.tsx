@@ -9,7 +9,7 @@ import {
   formatMoney,
   getBudgetProgress,
 } from "@/lib/finance";
-import { CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/constants";
 import { CategoryIcon } from "@/components/transactions/category-icon";
 import { BudgetModal } from "@/components/budget/budget-modal";
 import { Budget } from "@/types";
@@ -174,7 +174,7 @@ export default function BudgetPage() {
       ) : (
         <div className="space-y-3">
           {budgets.map((budget) => {
-            const { spent, remaining, percentage, isOver, status, barColor } =
+            const { spent, remaining, percentage, isOver, status } =
               getBudgetProgress(budget, monthTxs);
             const cat = CATEGORIES[budget.categoryId];
 

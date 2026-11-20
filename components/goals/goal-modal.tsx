@@ -1,7 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Target } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { SavingsGoal } from "@/types";
 import { cn } from "@/lib/utils";
@@ -14,30 +14,19 @@ interface GoalModalProps {
 
 const COLORS = ["#C8A44A", "#2D7D5F", "#4A90D9", "#7C6FCD", "#E05C4B", "#8B6F4A"];
 
-export function GoalModal({ open, onClose, goalToEdit }: GoalModalProps) {
+export function GoalModal(props: GoalModalProps) {
+  if (!props.open) return null;
+  return <GoalModalInner key={props.goalToEdit?.id ?? "new"} {...props} />;
+}
+
+function GoalModalInner({ open, onClose, goalToEdit }: GoalModalProps) {
   const { addGoal, updateGoal } = useFinanceStore();
 
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [saved, setSaved] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [color, setColor] = useState(COLORS[0]);
-
-  useEffect(() => {
-    if (goalToEdit) {
-      setName(goalToEdit.name);
-      setTarget(String(goalToEdit.target));
-      setSaved(String(goalToEdit.saved));
-      setDeadline(goalToEdit.deadline || "");
-      setColor(goalToEdit.color);
-    } else {
-      setName("");
-      setTarget("");
-      setSaved("");
-      setDeadline("");
-      setColor(COLORS[0]);
-    }
-  }, [goalToEdit, open]);
+  const [name, setName] = useState(goalToEdit?.name ?? "");
+  const [target, setTarget] = useState(goalToEdit ? String(goalToEdit.target) : "");
+  const [saved, setSaved] = useState(goalToEdit ? String(goalToEdit.saved) : "");
+  const [deadline, setDeadline] = useState(goalToEdit?.deadline ?? "");
+  const [color, setColor] = useState(goalToEdit?.color ?? COLORS[0]);
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

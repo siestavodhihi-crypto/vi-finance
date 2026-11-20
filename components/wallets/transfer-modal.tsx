@@ -1,32 +1,30 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, ArrowLeftRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, getVietnamDateString } from "@/lib/finance";
 
 interface TransferModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-export function TransferModal({ open, onClose }: TransferModalProps) {
+export function TransferModal(props: TransferModalProps) {
+  if (!props.open) return null;
+  return <TransferModalInner {...props} />;
+}
+
+function TransferModalInner({ open, onClose }: TransferModalProps) {
   const { wallets, transferMoney } = useFinanceStore();
   const [fromWalletId, setFromWalletId] = useState(wallets[0]?.id ?? "");
   const [toWalletId, setToWalletId] = useState(wallets[1]?.id ?? wallets[0]?.id ?? "");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [date, setDate] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setDate(new Date().toISOString().slice(0, 10));
-    }
-  }, [open]);
+  const [date, setDate] = useState(() => getVietnamDateString());
 
   const fromWallet = wallets.find((w) => w.id === fromWalletId);
-  const toWallet = wallets.find((w) => w.id === toWalletId);
 
   const formatInput = (val: string) => {
     const num = val.replace(/\D/g, "");

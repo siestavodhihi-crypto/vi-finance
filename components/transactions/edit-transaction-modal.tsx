@@ -1,9 +1,10 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, ArrowUpCircle, ArrowDownCircle, ArrowLeftRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/constants";
+import { getVietnamDateString } from "@/lib/finance";
 import { Transaction, TransactionType, CategoryId } from "@/types";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/transactions/category-icon";
@@ -14,32 +15,38 @@ interface EditTransactionModalProps {
   onClose: () => void;
 }
 
-export function EditTransactionModal({
+export function EditTransactionModal(props: EditTransactionModalProps) {
+  if (!props.open || !props.transaction) return null;
+  return (
+    <EditTransactionModalInner
+      key={props.transaction.id}
+      transaction={props.transaction}
+      open={props.open}
+      onClose={props.onClose}
+    />
+  );
+}
+
+function EditTransactionModalInner({
   transaction,
   open,
   onClose,
-}: EditTransactionModalProps) {
+}: {
+  transaction: Transaction;
+  open: boolean;
+  onClose: () => void;
+}) {
   const { wallets, updateTransaction } = useFinanceStore();
 
-  const [type, setType] = useState<TransactionType>("expense");
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState<CategoryId>("food");
-  const [walletId, setWalletId] = useState("");
-  const [toWalletId, setToWalletId] = useState("");
-  const [note, setNote] = useState("");
-  const [date, setDate] = useState("");
-
-  useEffect(() => {
-    if (transaction) {
-      setType(transaction.type);
-      setAmount(String(transaction.amount));
-      setCategoryId(transaction.categoryId);
-      setWalletId(transaction.walletId);
-      setToWalletId(transaction.toWalletId || "");
-      setNote(transaction.note || "");
-      setDate(transaction.date ? transaction.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
-    }
-  }, [transaction, open]);
+  const [type, setType] = useState<TransactionType>(transaction.type);
+  const [amount, setAmount] = useState(String(transaction.amount));
+  const [categoryId, setCategoryId] = useState<CategoryId>(transaction.categoryId);
+  const [walletId, setWalletId] = useState(transaction.walletId);
+  const [toWalletId, setToWalletId] = useState(transaction.toWalletId || "");
+  const [note, setNote] = useState(transaction.note || "");
+  const [date, setDate] = useState(
+    transaction.date ? transaction.date.slice(0, 10) : getVietnamDateString()
+  );
 
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
