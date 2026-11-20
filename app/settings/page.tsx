@@ -312,7 +312,7 @@ export default function SettingsPage() {
 
       {/* App info */}
       <div className="card p-4 text-center space-y-1">
-        <p className="text-sm font-600 text-[var(--color-accent-text)]">Vàng</p>
+        <p className="text-sm font-700 text-[var(--color-accent-text)]">Ví</p>
         <p className="text-xs text-[var(--color-text-secondary)]">
           Phiên bản 1.0.0 — Next.js + Supabase + PWA
         </p>

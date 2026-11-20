@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFinanceStore } from "@/store/useFinanceStore";
+import { useUIStore } from "@/store/useUIStore";
 import { useHydrated } from "@/lib/useHydrated";
 import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
 import {
@@ -20,8 +21,8 @@ import {
 } from "@/lib/finance";
 import { cn } from "@/lib/utils";
 import {
-  ArrowUpCircle,
-  ArrowDownCircle,
+  ArrowUpRight,
+  ArrowDownLeft,
   ArrowLeftRight,
   TrendingDown,
   TrendingUp,
@@ -29,6 +30,7 @@ import {
   Lock,
   Plus,
   CalendarClock,
+  Sparkles,
 } from "lucide-react";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import { format } from "date-fns";
@@ -70,6 +72,7 @@ function AmountDisplay({
 
 export function Dashboard() {
   const hydrated = useHydrated();
+  const setQuickAddOpen = useUIStore((s) => s.setQuickAddOpen);
   const { transactions, wallets, settings, recurringBills } = useFinanceStore();
   const { privacyMode, dailyLimit } = settings;
 
@@ -86,7 +89,6 @@ export function Dashboard() {
   const monthIncome = getTotalIncome(monthTxs);
   const monthExpense = getTotalExpense(monthTxs);
 
-  // Safe-to-Spend calculation
   const safeDetail = useMemo(
     () =>
       getSafeToSpendDetail({
@@ -122,249 +124,262 @@ export function Dashboard() {
 
   return (
     <div className="space-y-5 pb-24 md:pb-8">
-      {/* Greeting & Quick Action buttons */}
-      <div className="flex items-center justify-between">
+      {/* Top Greeting & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-500 text-[var(--color-text-secondary)] capitalize">{today}</p>
           <h1 className="text-2xl font-800 tracking-tight text-[var(--color-text-primary)]">
-            Xin chào! 👋
+            Tổng quan tài chính
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setQuickAddOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] transition-colors"
+          >
+            <Sparkles size={14} className="text-[var(--color-accent-text)]" />
+            <span>Nhập nhanh</span>
+            <kbd className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg)] text-[var(--color-text-secondary)]">
+              ⌘K
+            </kbd>
+          </button>
+          <button
             onClick={() => setTransferOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-all"
+            className="hidden md:inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] transition-colors"
           >
             <ArrowLeftRight size={14} strokeWidth={2} />
             <span>Chuyển ví</span>
           </button>
           <button
             onClick={() => setAddTxOpen(true)}
-            className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 rounded-[var(--radius-md)] bg-[var(--color-accent)] px-3.5 py-2 text-xs font-700 text-[var(--color-accent-fg)] active:scale-95 transition-all shadow-sm"
+            className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 rounded-[var(--radius-md)] bg-[var(--color-accent)] px-4 py-2 text-xs font-700 text-[var(--color-accent-fg)] active:scale-95 transition-all shadow-sm"
           >
-            <Plus size={16} strokeWidth={2} />
+            <Plus size={16} strokeWidth={2.25} />
             <span>Ghi chép</span>
           </button>
         </div>
       </div>
 
-      {/* Hero — Total Assets */}
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-600 uppercase tracking-wider text-[var(--color-text-secondary)]">
-            Tổng tài sản hiện có
-          </p>
+      {/* HERO CARD — Deep Matcha Apple-Wallet / Wise style */}
+      <div className="card-hero p-6 sm:p-7 space-y-6">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-600 uppercase tracking-widest text-[var(--color-hero-muted)]">
+            Tổng tài sản
+          </span>
           <Link
             href="/wallets"
-            className="text-xs font-600 text-[var(--color-accent-text)] hover:underline"
+            className="text-xs font-600 text-[var(--color-hero-muted)] hover:text-white transition-colors"
           >
-            Chi tiết ví ({wallets.length}) →
+            {wallets.length} ví đang dùng →
           </Link>
         </div>
 
-        <div className="mb-4">
+        <div>
           <AmountDisplay
             amount={totalAssets}
             privacyMode={privacyMode}
-            className="text-4xl sm:text-5xl font-800 text-[var(--color-accent-text)] leading-none"
+            className="text-4xl sm:text-5xl font-800 tracking-tight text-[var(--color-hero-fg)] leading-none"
           />
         </div>
 
-        {/* Income / Expense summary row */}
+        {/* Income / Expense Glass Pills */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-income)]/10 px-3.5 py-2.5 border border-[var(--color-income)]/20">
-            <ArrowUpCircle size={20} strokeWidth={2} className="text-[var(--color-income)] flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-600 uppercase tracking-wider text-[var(--color-income)]">
-                Thu tháng {format(new Date(), "MM")}
-              </p>
-              <AmountDisplay
-                amount={monthIncome}
-                privacyMode={privacyMode}
-                className="text-sm sm:text-base font-700 text-[var(--color-income)] block truncate"
-              />
+          <div className="rounded-[var(--radius-md)] bg-white/10 backdrop-blur-sm px-4 py-3 border border-white/10">
+            <div className="flex items-center gap-1.5 text-[11px] font-500 text-[var(--color-hero-muted)] mb-1">
+              <ArrowDownLeft size={14} className="text-emerald-300" />
+              <span>Thu tháng {format(new Date(), "MM")}</span>
             </div>
+            <AmountDisplay
+              amount={monthIncome}
+              privacyMode={privacyMode}
+              className="text-base sm:text-lg font-700 text-white block truncate"
+            />
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-expense)]/10 px-3.5 py-2.5 border border-[var(--color-expense)]/20">
-            <ArrowDownCircle size={20} strokeWidth={2} className="text-[var(--color-expense)] flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-600 uppercase tracking-wider text-[var(--color-expense)]">
-                Chi tháng {format(new Date(), "MM")}
-              </p>
-              <AmountDisplay
-                amount={monthExpense}
-                privacyMode={privacyMode}
-                className="text-sm sm:text-base font-700 text-[var(--color-expense)] block truncate"
-              />
+          <div className="rounded-[var(--radius-md)] bg-white/10 backdrop-blur-sm px-4 py-3 border border-white/10">
+            <div className="flex items-center gap-1.5 text-[11px] font-500 text-[var(--color-hero-muted)] mb-1">
+              <ArrowUpRight size={14} className="text-rose-300" />
+              <span>Chi tháng {format(new Date(), "MM")}</span>
             </div>
+            <AmountDisplay
+              amount={monthExpense}
+              privacyMode={privacyMode}
+              className="text-base sm:text-lg font-700 text-white block truncate"
+            />
           </div>
         </div>
       </div>
 
-      {/* SAFE-TO-SPEND CARD (Công thức sinh viên an tâm không lo đói) */}
-      <div className="card p-5 border-l-4 border-l-[var(--color-accent)]">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={20} strokeWidth={2} className="text-[var(--color-accent)]" />
-            <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
-              Mức tiêu an toàn hôm nay (Safe-to-Spend)
-            </h2>
+      {/* BENTO ROW 1: Safe-to-Spend + Hạn mức hôm nay */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Safe-to-Spend (3 cols) */}
+        <div className="card p-5 lg:col-span-3 flex flex-col justify-between space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--color-accent-soft)] text-[var(--color-accent-text)] flex items-center justify-center">
+                <ShieldCheck size={17} strokeWidth={2} />
+              </div>
+              <div>
+                <h2 className="text-sm font-700 text-[var(--color-text-primary)] leading-tight">
+                  Tiêu an toàn hôm nay
+                </h2>
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
+                  Safe-to-Spend · Còn {safeDetail.daysRemaining} ngày
+                </p>
+              </div>
+            </div>
           </div>
-          <span className="text-[11px] font-600 text-[var(--color-text-secondary)] bg-[var(--color-bg)] px-2.5 py-1 rounded-[var(--radius-sm)]">
-            Còn {safeDetail.daysRemaining} ngày trong tháng
-          </span>
-        </div>
 
-        <div className="flex items-baseline gap-2 mb-3">
-          <AmountDisplay
-            amount={Math.round(safeDetail.dailyAmount)}
-            privacyMode={privacyMode}
-            className={cn(
-              "text-3xl font-800",
-              safeDetail.dailyAmount > 0
-                ? "text-[var(--color-income)]"
-                : "text-[var(--color-expense)]"
-            )}
-          />
-          <span className="text-xs text-[var(--color-text-secondary)] font-medium">/ ngày</span>
-        </div>
+          <div className="flex items-baseline gap-1.5">
+            <AmountDisplay
+              amount={Math.round(safeDetail.dailyAmount)}
+              privacyMode={privacyMode}
+              className={cn(
+                "text-3xl font-800 tracking-tight",
+                safeDetail.dailyAmount > 0
+                  ? "text-[var(--color-accent-text)]"
+                  : "text-[var(--color-expense)]"
+              )}
+            />
+            <span className="text-xs text-[var(--color-text-secondary)] font-500">/ ngày</span>
+          </div>
 
-        {/* Formula breakdown */}
-        <div className="rounded-[var(--radius-md)] bg-[var(--color-bg)] p-3 text-xs space-y-2 border border-[var(--color-border)]">
-          <div className="flex justify-between items-center text-[var(--color-text-secondary)]">
-            <span>Ví khả dụng (tiền có thể tiêu):</span>
-            <span className="font-600 text-[var(--color-text-primary)] tabular-nums">
-              {privacyMode ? "•••••" : formatMoney(safeDetail.availableBalance)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-[var(--color-text-secondary)]">
-            <span className="flex items-center gap-1">
-              <CalendarClock size={12} />
-              Hóa đơn chưa thanh toán:
-            </span>
-            <span className="font-600 text-[var(--color-expense)] tabular-nums">
-              -{privacyMode ? "•••••" : formatMoney(safeDetail.unpaidBills)}
-            </span>
-          </div>
-          {safeDetail.lockedSavings > 0 && (
-            <div className="flex justify-between items-center text-[var(--color-text-secondary)]">
-              <span className="flex items-center gap-1">
-                <Lock size={12} />
-                Tiền tiết kiệm đã khóa:
-              </span>
-              <span className="font-600 text-[var(--color-accent)] tabular-nums">
-                -{privacyMode ? "•••••" : formatMoney(safeDetail.lockedSavings)}
+          <div className="rounded-[var(--radius-md)] bg-[var(--color-bg)] p-3 text-xs space-y-1.5">
+            <div className="flex justify-between text-[var(--color-text-secondary)]">
+              <span>Ví khả dụng</span>
+              <span className="font-600 text-[var(--color-text-primary)] tabular-nums">
+                {privacyMode ? "•••••" : formatMoney(safeDetail.availableBalance)}
               </span>
             </div>
-          )}
-          <div className="border-t border-[var(--color-border)] pt-1.5 flex justify-between font-600">
-            <span className="text-[var(--color-text-primary)]">Quỹ chi tiêu tự do còn lại:</span>
+            <div className="flex justify-between text-[var(--color-text-secondary)]">
+              <span className="inline-flex items-center gap-1">
+                <CalendarClock size={12} /> Hóa đơn chưa trả
+              </span>
+              <span className="font-600 text-[var(--color-expense)] tabular-nums">
+                -{privacyMode ? "•••••" : formatMoney(safeDetail.unpaidBills)}
+              </span>
+            </div>
+            {safeDetail.lockedSavings > 0 && (
+              <div className="flex justify-between text-[var(--color-text-secondary)]">
+                <span className="inline-flex items-center gap-1">
+                  <Lock size={12} /> Tiết kiệm khóa
+                </span>
+                <span className="font-600 text-[var(--color-accent-text)] tabular-nums">
+                  -{privacyMode ? "•••••" : formatMoney(safeDetail.lockedSavings)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Hạn mức hôm nay (2 cols) */}
+        <div className="card p-5 lg:col-span-2 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
+              Hạn mức hôm nay
+            </h2>
             <span
               className={cn(
-                "tabular-nums",
-                safeDetail.pool >= 0 ? "text-[var(--color-income)]" : "text-[var(--color-expense)]"
+                "text-[11px] font-700 px-2.5 py-1 rounded-full",
+                dailyPct >= 100
+                  ? "bg-[var(--color-expense)]/12 text-[var(--color-expense)]"
+                  : dailyPct >= 80
+                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                  : "bg-[var(--color-accent-soft)] text-[var(--color-accent-text)]"
               )}
             >
-              {privacyMode ? "•••••" : formatMoney(safeDetail.pool)}
+              {Math.round(dailyPct)}%
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Daily limit card */}
-      <div className="card p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-xs font-500 text-[var(--color-text-secondary)]">
-              Hạn mức chi tiêu đặt ra hôm nay
+          <div className="space-y-1">
+            <p className="text-2xl font-800 tabular-nums text-[var(--color-text-primary)]">
+              {privacyMode
+                ? "••••• ₫"
+                : dailyRemaining >= 0
+                ? formatMoney(dailyRemaining)
+                : `-${formatMoney(Math.abs(dailyRemaining))}`}
             </p>
-            <p className="text-sm font-600 text-[var(--color-text-primary)]">
-              {privacyMode ? (
-                <span className="tracking-widest">•••••</span>
-              ) : (
-                <span className="tabular-nums">
-                  Đã tiêu {formatMoney(dailySpent)} / {formatMoney(dailyLimit)}
-                </span>
-              )}
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {dailyRemaining >= 0 ? "Còn lại hôm nay" : "Đã vượt hạn mức hôm nay"} ·{" "}
+              {privacyMode ? "•••" : `đã tiêu ${formatMoneyShort(dailySpent)} / ${formatMoneyShort(dailyLimit)}`}
             </p>
           </div>
-          <div
-            className={cn(
-              "text-xs font-600 px-2.5 py-1 rounded-[var(--radius-sm)]",
-              dailyPct >= 100
-                ? "bg-[var(--color-expense)]/15 text-[var(--color-expense)]"
-                : dailyPct >= 75
-                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                : "bg-[var(--color-income)]/15 text-[var(--color-income)]"
-            )}
-          >
-            {dailyRemaining >= 0 ? `Còn ${formatMoneyShort(dailyRemaining)}` : `Vượt ${formatMoneyShort(Math.abs(dailyRemaining))}`}
+
+          <div className="space-y-2">
+            <div className="h-2.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  dailyPct >= 100
+                    ? "bg-[var(--color-expense)]"
+                    : dailyPct >= 80
+                    ? "bg-[var(--color-warning)]"
+                    : "bg-[var(--color-accent)]"
+                )}
+                style={{ width: `${dailyPct}%` }}
+              />
+            </div>
+            <Link
+              href="/settings"
+              className="text-[11px] font-600 text-[var(--color-accent-text)] hover:underline inline-block"
+            >
+              Điều chỉnh hạn mức →
+            </Link>
           </div>
-        </div>
-        <div className="h-2 rounded-full bg-[var(--color-border)]">
-          <div
-            className={cn(
-              "h-full rounded-full transition-all duration-500",
-              dailyPct >= 100
-                ? "bg-[var(--color-expense)]"
-                : dailyPct >= 75
-                ? "bg-amber-500"
-                : "bg-[var(--color-income)]"
-            )}
-            style={{ width: `${dailyPct}%` }}
-          />
         </div>
       </div>
 
-      {/* 14-day bar chart */}
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
-            Dòng tiền 14 ngày qua
-          </h2>
-          <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-income)]" /> Thu
-            </span>
-            <span className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-expense)]" /> Chi
-            </span>
+      {/* BENTO ROW 2: Biểu đồ 14 ngày + Phân bổ danh mục */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
+              Dòng tiền 14 ngày qua
+            </h2>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-income)]" /> Thu
+              </span>
+              <span className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-expense)]" /> Chi
+              </span>
+            </div>
           </div>
+
+          {!hasData ? <EmptyChartState /> : <Last14DaysBarChart data={chartData} />}
         </div>
 
-        {!hasData ? (
-          <EmptyChartState />
-        ) : (
-          <Last14DaysBarChart data={chartData} />
-        )}
-      </div>
-
-      {/* Category donut chart */}
-      {catStats.length > 0 && (
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
               Phân bổ chi tiêu tháng này
             </h2>
-            <Link href="/budget" className="text-xs font-600 text-[var(--color-accent-text)] hover:underline">
-              Quản lý ngân sách →
+            <Link
+              href="/budget"
+              className="text-xs font-600 text-[var(--color-accent-text)] hover:underline"
+            >
+              Ngân sách →
             </Link>
           </div>
-          <CategoryDonutChart data={catStats} privacyMode={privacyMode} />
+          {catStats.length === 0 ? (
+            <EmptyChartState />
+          ) : (
+            <CategoryDonutChart data={catStats} privacyMode={privacyMode} />
+          )}
         </div>
-      )}
+      </div>
 
       {/* Recent transactions */}
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-700 text-[var(--color-text-primary)]">
-            5 Giao dịch gần nhất
+            5 giao dịch gần nhất
           </h2>
           <Link
             href="/transactions"
-            className="text-xs font-600 text-[var(--color-accent)] hover:underline"
+            className="text-xs font-600 text-[var(--color-accent-text)] hover:underline"
           >
             Xem tất cả ({transactions.length}) →
           </Link>
@@ -391,8 +406,8 @@ export function Dashboard() {
 function EmptyChartState() {
   return (
     <div className="flex flex-col items-center justify-center h-44 text-center">
-      <TrendingUp size={40} strokeWidth={1.25} className="text-[var(--color-border)] mb-3" />
-      <p className="text-sm text-[var(--color-text-secondary)]">Chưa có dữ liệu giao dịch</p>
+      <TrendingUp size={36} strokeWidth={1.25} className="text-[var(--color-border)] mb-2" />
+      <p className="text-xs text-[var(--color-text-secondary)]">Chưa có dữ liệu giao dịch</p>
     </div>
   );
 }
@@ -400,14 +415,14 @@ function EmptyChartState() {
 function EmptyTransactions({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
-      <TrendingDown size={40} strokeWidth={1.25} className="text-[var(--color-border)] mb-3" />
+      <TrendingDown size={38} strokeWidth={1.25} className="text-[var(--color-border)] mb-2" />
       <p className="text-sm font-600 text-[var(--color-text-primary)] mb-1">Chưa có giao dịch</p>
       <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-        Bắt đầu ghi chép các khoản chi tiêu nhỏ nhất
+        Bắt đầu ghi chép từ những khoản nhỏ nhất
       </p>
       <button
         onClick={onAdd}
-        className="px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent)] text-white text-xs font-600"
+        className="min-h-[44px] px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-accent)] text-[var(--color-accent-fg)] text-xs font-700"
       >
         + Thêm giao dịch đầu tiên
       </button>

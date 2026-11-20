@@ -11,7 +11,6 @@ import {
   Users,
   BarChart2,
   Settings,
-  Coins,
   Sparkles,
   LogIn,
   LogOut,
@@ -55,25 +54,25 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-56 border-r border-[var(--color-border)] bg-[var(--color-surface)] z-30 py-5 px-3">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 px-3 mb-4 group">
-        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-          <Coins size={18} strokeWidth={2} className="text-white" />
+      <Link href="/" className="flex items-center gap-2.5 px-3 mb-5 group">
+        <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+          <Wallet size={18} strokeWidth={2.2} className="text-[var(--color-accent-fg)]" />
         </div>
         <div>
           <span className="text-lg font-800 tracking-tight text-[var(--color-text-primary)] block leading-none">
-            Vàng
+            Ví
           </span>
-          <span className="text-[10px] text-[var(--color-text-secondary)]">Quản lý tài chính</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">Tiền của bạn, gọn hơn</span>
         </div>
       </Link>
 
       {/* Quick-Add Button (Ctrl+K) */}
       <button
         onClick={() => setQuickAddOpen(true)}
-        className="mb-4 flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+        className="mb-4 flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-xs font-600 text-[var(--color-text-primary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-text)] transition-colors"
       >
         <span className="flex items-center gap-2">
-          <Sparkles size={14} className="text-[var(--color-accent)]" />
+          <Sparkles size={14} className="text-[var(--color-accent-text)]" />
           Nhập nhanh
         </span>
         <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)]">
@@ -90,16 +89,16 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm font-500 transition-colors duration-150",
+                "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-500 transition-colors duration-150",
                 active
-                  ? "bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-600"
-                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[var(--color-accent-soft)] text-[var(--color-accent-text)] font-700"
+                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)]"
               )}
             >
               <Icon
                 size={18}
-                strokeWidth={active ? 2 : 1.75}
-                className={active ? "text-[var(--color-accent)]" : ""}
+                strokeWidth={active ? 2.1 : 1.75}
+                className={active ? "text-[var(--color-accent-text)]" : ""}
               />
               {label}
             </Link>

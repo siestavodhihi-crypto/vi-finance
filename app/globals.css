@@ -1,49 +1,64 @@
-/* globals.css — Vàng Design System (WCAG AA compliant, next/font optimized) */
+/* globals.css — Ví Design System (Matcha & Kem sữa · WCAG AA) */
 @import "tailwindcss";
 
 /* ── CSS Variables ──────────────────────────────────────── */
 :root {
-  /* Light mode — Warm Ivory & Honey Gold (DESIGN.md) */
-  --color-bg: #f5f4f0;
+  /* Light mode — Matcha & Kem sữa (Copilot / Wise vibe) */
+  --color-bg: #f6f5f0;
   --color-surface: #ffffff;
-  --color-border: #e8e6df;
-  --color-text-primary: #1a1a18;
-  --color-text-secondary: #5e5b54; /* WCAG AA >= 5.5:1 trên #F5F4F0 & #FFF */
-  --color-accent: #c8a44a;
-  --color-accent-text: #85661a;    /* WCAG AA >= 4.9:1 cho chữ vàng trên nền sáng */
-  --color-accent-fg: #1a1a18;      /* WCAG AAA >= 7.8:1 cho chữ trên nút nền vàng */
-  --color-income: #246b50;         /* WCAG AA >= 5.6:1 */
-  --color-expense: #b53224;        /* WCAG AA >= 5.3:1 */
+  --color-border: #e4e6e0;
+  --color-text-primary: #141c19;
+  --color-text-secondary: #58635e; /* WCAG AA >= 5.8:1 trên #F6F5F0 & #FFF */
+  --color-accent: #2e6f5e;         /* Matcha đậm sang trọng */
+  --color-accent-soft: #e7f2ed;    /* Matcha sữa nhạt */
+  --color-accent-text: #215749;    /* WCAG AAA >= 7.8:1 */
+  --color-accent-fg: #ffffff;      /* WCAG AA+ >= 5.9:1 trên nút Matcha */
+  --color-income: #1f7a5a;         /* Xanh lá dịu */
+  --color-expense: #c9463b;        /* Đỏ san hô đất */
+  --color-warning: #c47d26;        /* Hổ phách ấm */
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(26, 26, 24, 0.06), 0 1px 2px rgba(26, 26, 24, 0.04);
-  --shadow-md: 0 4px 12px rgba(26, 26, 24, 0.08), 0 2px 4px rgba(26, 26, 24, 0.04);
-  --shadow-lg: 0 8px 24px rgba(26, 26, 24, 0.10), 0 4px 8px rgba(26, 26, 24, 0.06);
-  --shadow-focus: 0 0 0 3px rgba(200, 164, 74, 0.45);
+  /* Hero card (Apple Wallet / Wise Deep Matcha card) */
+  --color-hero-bg: #1d493e;
+  --color-hero-fg: #f8faf8;
+  --color-hero-muted: #b7d3c9;
 
-  /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Shadows — mềm, thoáng kiểu hiện đại */
+  --shadow-sm: 0 1px 2px rgba(20, 28, 25, 0.04), 0 1px 3px rgba(20, 28, 25, 0.03);
+  --shadow-md: 0 6px 20px rgba(20, 28, 25, 0.06), 0 2px 6px rgba(20, 28, 25, 0.03);
+  --shadow-lg: 0 14px 36px rgba(20, 28, 25, 0.10), 0 4px 12px rgba(20, 28, 25, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(46, 111, 94, 0.35);
+
+  /* Radius — mềm mại, GenZ */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
   --radius-xl: 24px;
   --radius-full: 9999px;
 }
 
 .dark {
-  --color-bg: #141412;
-  --color-surface: #1e1d1a;
-  --color-border: #2c2b27;
-  --color-text-primary: #f0ede6;
-  --color-text-secondary: #9c988f; /* WCAG AA >= 5.8:1 trên #1E1D1A */
-  --color-accent: #d4af5a;
-  --color-accent-text: #d4af5a;    /* WCAG AAA >= 8.2:1 trên #1E1D1A */
-  --color-accent-fg: #141412;      /* WCAG AAA >= 8.9:1 trên nút vàng */
-  --color-income: #4daa84;         /* WCAG AA >= 6.1:1 */
-  --color-expense: #e86b5c;        /* WCAG AA >= 5.2:1 */
+  /* Dark mode — Deep Forest Slate (dịu mắt, KHÔNG đen kịt + neon) */
+  --color-bg: #0e1311;
+  --color-surface: #161e1b;
+  --color-border: #24302b;
+  --color-text-primary: #eef2ef;
+  --color-text-secondary: #92a09a; /* WCAG AA >= 5.9:1 */
+  --color-accent: #5cb898;         /* Matcha mint dịu */
+  --color-accent-soft: rgba(92, 184, 152, 0.14);
+  --color-accent-text: #72c8aa;    /* WCAG AAA >= 8.5:1 */
+  --color-accent-fg: #0c1713;      /* WCAG AAA >= 8.4:1 */
+  --color-income: #5cb898;
+  --color-expense: #ea7167;
+  --color-warning: #e6a64c;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.12);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.24), 0 2px 4px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.30), 0 4px 8px rgba(0, 0, 0, 0.18);
+  --color-hero-bg: #1a3830;
+  --color-hero-fg: #f3f7f5;
+  --color-hero-muted: #a6c9bc;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.36), 0 4px 12px rgba(0, 0, 0, 0.20);
+  --shadow-focus: 0 0 0 3px rgba(92, 184, 152, 0.4);
 }
 
 /* ── Base ───────────────────────────────────────────────── */
@@ -57,19 +72,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Numbers always tabular */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Focus ring chuẩn DESIGN.md cho điều hướng bàn phím */
+/* Focus ring chuẩn WCAG cho điều hướng bàn phím */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   box-shadow: var(--shadow-focus);
 }
 
-/* Đảm bảo nút bấm tối thiểu 44px trên mobile (chỉ áp dụng cho button không phải switch/color-dot nhỏ) */
 @media (max-width: 767px) {
   .touch-target {
     min-height: 44px;
@@ -77,7 +90,7 @@ body {
   }
 }
 
-/* ── Utility classes ────────────────────────────────────── */
+/* ── Surface & Card System ──────────────────────────────── */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -85,8 +98,16 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.card-hero {
+  background: var(--color-hero-bg);
+  color: var(--color-hero-fg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
 .card-hover {
-  transition: box-shadow 150ms ease-out, transform 150ms ease-out;
+  transition: box-shadow 180ms ease-out, transform 180ms ease-out, border-color 180ms ease-out;
 }
 
 .card-hover:hover {
@@ -94,7 +115,7 @@ body {
   transform: translateY(-2px);
 }
 
-/* ── Scrollbar (Webkit) ──────────────────────────────────── */
+/* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -109,7 +130,7 @@ body {
   border-radius: var(--radius-full);
 }
 
-/* ── Reduced motion ──────────────────────────────────────── */
+/* ── Reduced motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

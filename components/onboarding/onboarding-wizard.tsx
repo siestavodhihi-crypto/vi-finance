@@ -107,7 +107,7 @@ function OnboardingWizardInner({ onClose }: { onClose: () => void }) {
         month: getCurrentMonth(),
       });
     }
-    toast.success("Thiết lập xong! Chào mừng bạn đến với Vàng.");
+    toast.success("Thiết lập xong! Chào mừng bạn đến với Ví.");
     onClose();
   };
 

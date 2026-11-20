@@ -12,13 +12,13 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Vàng — Quản lý tài chính cá nhân",
-  description: "Ứng dụng quản lý tiền bạc tối giản cho sinh viên",
+  title: "Ví — Quản lý tài chính cá nhân",
+  description: "Ứng dụng quản lý tiền bạc tối giản, hiện đại dành cho sinh viên",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Vàng",
+    title: "Ví",
   },
   icons: {
     icon: [
@@ -35,8 +35,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F4F0" },
-    { media: "(prefers-color-scheme: dark)", color: "#141412" },
+    { media: "(prefers-color-scheme: light)", color: "#F6F5F0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1311" },
   ],
 };
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Coins, Mail, Lock, LogIn, UserPlus, Sparkles } from "lucide-react";
+import { Wallet, Mail, Lock, LogIn, UserPlus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { useFinanceStore } from "@/store/useFinanceStore";
@@ -83,13 +83,13 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--color-accent)] flex items-center justify-center mx-auto shadow-sm">
-            <Coins size={24} strokeWidth={2} className="text-white" />
+            <Wallet size={24} strokeWidth={2.2} className="text-[var(--color-accent-fg)]" />
           </div>
           <h1 className="text-2xl font-800 tracking-tight text-[var(--color-text-primary)]">
-            Vàng
+            Ví
           </h1>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            Quản lý tài chính cá nhân tối giản cho sinh viên
+            Quản lý tài chính tối giản, dịu mắt cho GenZ
           </p>
         </div>
 

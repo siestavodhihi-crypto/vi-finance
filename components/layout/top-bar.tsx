@@ -1,5 +1,5 @@
 "use client";
-import { Coins, Sparkles } from "lucide-react";
+import { Wallet, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PrivacyToggle } from "@/components/ui/privacy-toggle";
 import { useUIStore } from "@/store/useUIStore";
@@ -8,12 +8,14 @@ export function TopBar() {
   const setQuickAddOpen = useUIStore((s) => s.setQuickAddOpen);
 
   return (
-    <header className="md:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 bg-[var(--color-surface)]/90 backdrop-blur-sm border-b border-[var(--color-border)]">
+    <header className="md:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 bg-[var(--color-surface)]/90 backdrop-blur-md border-b border-[var(--color-border)]">
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center">
-          <Coins size={15} strokeWidth={2} className="text-white" />
+        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-accent)] flex items-center justify-center">
+          <Wallet size={16} strokeWidth={2.2} className="text-[var(--color-accent-fg)]" />
         </div>
-        <span className="text-base font-700 text-[var(--color-text-primary)]">Vàng</span>
+        <span className="text-base font-800 tracking-tight text-[var(--color-text-primary)]">
+          Ví
+        </span>
       </div>
 
       <div className="flex items-center gap-1">
