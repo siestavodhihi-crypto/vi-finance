@@ -1,0 +1,292 @@
+/**
+ * Sample data — realistic student finance in Vietnam (Nov 2026)
+ */
+import { Transaction, Wallet, Budget, RecurringBill } from "@/types";
+import { format, subDays } from "date-fns";
+
+function daysAgo(n: number, time = "08:00:00"): string {
+  return `${format(subDays(new Date(), n), "yyyy-MM-dd")}T${time}`;
+}
+
+export const SAMPLE_WALLETS: Wallet[] = [
+  {
+    id: "cash",
+    name: "Tiền mặt",
+    balance: 850_000,
+    initialBalance: 1_000_000,
+    icon: "Wallet",
+    color: "#C8A44A",
+    isLocked: false,
+    note: "Tiền mặt tiêu vặt hàng ngày",
+  },
+  {
+    id: "bank",
+    name: "Vietcombank (VCB)",
+    balance: 3_820_000,
+    initialBalance: 2_000_000,
+    icon: "CreditCard",
+    color: "#2D7D5F",
+    isLocked: false,
+    note: "Tài khoản nhận tiền gia đình & lương",
+  },
+  {
+    id: "momo",
+    name: "Ví MoMo",
+    balance: 450_000,
+    initialBalance: 500_000,
+    icon: "Smartphone",
+    color: "#D82D8B",
+    isLocked: false,
+    note: "Thanh toán trà sữa & đặt đồ ăn",
+  },
+  {
+    id: "savings-locked",
+    name: "Ống heo đổi laptop (Đã khóa)",
+    balance: 2_500_000,
+    initialBalance: 2_500_000,
+    icon: "PiggyBank",
+    color: "#8B6F4A",
+    isLocked: true,
+    note: "Tiền tiết kiệm khóa để mua laptop mới, không được tiêu",
+  },
+];
+
+export const SAMPLE_RECURRING_BILLS: RecurringBill[] = [
+  {
+    id: "bill-rent",
+    name: "Tiền phòng trọ",
+    amount: 2_500_000,
+    categoryId: "rent",
+    dueDay: 5,
+    walletId: "bank",
+    paidMonths: ["2026-11"], // Đã trả tháng này
+    note: "Chuyển khoản cho bác chủ nhà đầu tháng",
+  },
+  {
+    id: "bill-utilities",
+    name: "Tiền điện nước phòng trọ",
+    amount: 320_000,
+    categoryId: "utilities",
+    dueDay: 10,
+    walletId: "bank",
+    paidMonths: [], // Chưa trả tháng này
+    note: "Đóng theo số công tơ điện nước",
+  },
+  {
+    id: "bill-internet",
+    name: "Mạng Internet FPT",
+    amount: 110_000,
+    categoryId: "internet",
+    dueDay: 15,
+    walletId: "momo",
+    paidMonths: [], // Chưa trả tháng này
+    note: "Góp tiền mạng chung với phòng bên cạnh",
+  },
+];
+
+export const SAMPLE_TRANSACTIONS: Transaction[] = [
+  // --- Thu nhập ---
+  {
+    id: "t01",
+    type: "income",
+    amount: 3_000_000,
+    categoryId: "family",
+    walletId: "bank",
+    note: "Ba mẹ gửi tiền sinh hoạt tháng 11",
+    date: daysAgo(0, "09:00:00"),
+    createdAt: daysAgo(0, "09:00:00"),
+  },
+  {
+    id: "t02",
+    type: "income",
+    amount: 1_500_000,
+    categoryId: "freelance",
+    walletId: "bank",
+    note: "Làm thêm quán cà phê cuối tuần",
+    date: daysAgo(3, "18:30:00"),
+    createdAt: daysAgo(3, "18:30:00"),
+  },
+  {
+    id: "t03",
+    type: "income",
+    amount: 500_000,
+    categoryId: "freelance",
+    walletId: "cash",
+    note: "Dạy kèm toán em lớp 8",
+    date: daysAgo(7, "20:00:00"),
+    createdAt: daysAgo(7, "20:00:00"),
+  },
+  // --- Chuyển tiền giữa các ví (Transfer: không tính vào thu/chi) ---
+  {
+    id: "t-transfer-01",
+    type: "transfer",
+    amount: 500_000,
+    categoryId: "savings",
+    walletId: "bank",
+    toWalletId: "cash",
+    note: "Rút tiền ATM từ Vietcombank vào ví tiền mặt",
+    date: daysAgo(2, "11:00:00"),
+    createdAt: daysAgo(2, "11:00:00"),
+  },
+  {
+    id: "t-transfer-02",
+    type: "transfer",
+    amount: 200_000,
+    categoryId: "savings",
+    walletId: "bank",
+    toWalletId: "momo",
+    note: "Nạp tiền từ VCB vào ví MoMo",
+    date: daysAgo(4, "14:15:00"),
+    createdAt: daysAgo(4, "14:15:00"),
+  },
+  // --- Chi tiêu hôm nay ---
+  {
+    id: "t05",
+    type: "expense",
+    amount: 35_000,
+    categoryId: "food",
+    walletId: "cash",
+    note: "Bún bò Huế buổi sáng",
+    date: daysAgo(0, "07:30:00"),
+    createdAt: daysAgo(0, "07:30:00"),
+  },
+  {
+    id: "t06",
+    type: "expense",
+    amount: 55_000,
+    categoryId: "food",
+    walletId: "momo",
+    note: "Trà sữa Gong Cha với bạn",
+    date: daysAgo(0, "15:00:00"),
+    createdAt: daysAgo(0, "15:00:00"),
+  },
+  {
+    id: "t07",
+    type: "expense",
+    amount: 15_000,
+    categoryId: "transport",
+    walletId: "cash",
+    note: "Xe buýt tuyến 08 đến trường",
+    date: daysAgo(0, "07:00:00"),
+    createdAt: daysAgo(0, "07:00:00"),
+  },
+  // --- Chi tiêu hôm qua ---
+  {
+    id: "t08",
+    type: "expense",
+    amount: 65_000,
+    categoryId: "food",
+    walletId: "cash",
+    note: "Cơm trưa văn phòng + trà đá",
+    date: daysAgo(1, "12:00:00"),
+    createdAt: daysAgo(1, "12:00:00"),
+  },
+  {
+    id: "t09",
+    type: "expense",
+    amount: 45_000,
+    categoryId: "transport",
+    walletId: "bank",
+    note: "GrabBike về nhà khi mưa",
+    date: daysAgo(1, "22:00:00"),
+    createdAt: daysAgo(1, "22:00:00"),
+  },
+  {
+    id: "t10",
+    type: "expense",
+    amount: 299_000,
+    categoryId: "shopping",
+    walletId: "bank",
+    note: "Áo sơ mi trắng đi học",
+    date: daysAgo(1, "16:00:00"),
+    createdAt: daysAgo(1, "16:00:00"),
+  },
+  // --- Chi tiêu tuần trước ---
+  {
+    id: "t11",
+    type: "expense",
+    amount: 2_500_000,
+    categoryId: "rent",
+    walletId: "bank",
+    note: "Hóa đơn: Tiền phòng trọ tháng 11",
+    date: daysAgo(5, "08:00:00"),
+    createdAt: daysAgo(5, "08:00:00"),
+  },
+  {
+    id: "t13",
+    type: "expense",
+    amount: 85_000,
+    categoryId: "food",
+    walletId: "cash",
+    note: "Siêu thị WinMart — mì, trứng, xúc xích",
+    date: daysAgo(4, "18:00:00"),
+    createdAt: daysAgo(4, "18:00:00"),
+  },
+  {
+    id: "t14",
+    type: "expense",
+    amount: 120_000,
+    categoryId: "education",
+    walletId: "bank",
+    note: "Giáo trình Giải tích & Đại số",
+    date: daysAgo(6, "14:00:00"),
+    createdAt: daysAgo(6, "14:00:00"),
+  },
+  {
+    id: "t15",
+    type: "expense",
+    amount: 50_000,
+    categoryId: "entertainment",
+    walletId: "cash",
+    note: "Vé xem phim CGV cuối tuần",
+    date: daysAgo(6, "19:00:00"),
+    createdAt: daysAgo(6, "19:00:00"),
+  },
+  {
+    id: "t16",
+    type: "expense",
+    amount: 35_000,
+    categoryId: "food",
+    walletId: "cash",
+    note: "Bánh mì chả cá + sữa đậu",
+    date: daysAgo(8, "07:00:00"),
+    createdAt: daysAgo(8, "07:00:00"),
+  },
+  {
+    id: "t17",
+    type: "expense",
+    amount: 25_000,
+    categoryId: "food",
+    walletId: "momo",
+    note: "Trà đào chanh sả cổng trường",
+    date: daysAgo(9, "16:00:00"),
+    createdAt: daysAgo(9, "16:00:00"),
+  },
+];
+
+export const SAMPLE_BUDGETS: Budget[] = [
+  {
+    id: "b01",
+    categoryId: "food",
+    limit: 1_800_000,
+    month: "2026-11",
+  },
+  {
+    id: "b02",
+    categoryId: "transport",
+    limit: 400_000,
+    month: "2026-11",
+  },
+  {
+    id: "b03",
+    categoryId: "shopping",
+    limit: 500_000,
+    month: "2026-11",
+  },
+  {
+    id: "b04",
+    categoryId: "entertainment",
+    limit: 300_000,
+    month: "2026-11",
+  },
+];
