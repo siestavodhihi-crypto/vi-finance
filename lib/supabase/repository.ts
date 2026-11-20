@@ -48,6 +48,7 @@ function mapTransaction(r: Record<string, unknown>): Transaction {
     note: String(r.note ?? ""),
     date: String(r.date),
     createdAt: String(r.created_at),
+    receiptUrl: r.receipt_url ? String(r.receipt_url) : undefined,
   };
 }
 
@@ -199,10 +200,26 @@ export async function insertTransaction(userId: string, tx: Transaction) {
     wallet_id: tx.walletId,
     to_wallet_id: tx.toWalletId ?? null,
     note: tx.note,
+    receipt_url: tx.receiptUrl ?? null,
     date: tx.date,
     created_at: tx.createdAt,
   });
   if (error) throw error;
+}
+
+export async function uploadReceiptImage(
+  userId: string,
+  txId: string,
+  file: File
+): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${userId}/${txId}.${ext}`;
+  const { error } = await db().storage.from("receipts").upload(path, file, {
+    contentType: file.type || "image/jpeg",
+    upsert: true,
+  });
+  if (error) throw error;
+  return path;
 }
 
 export async function patchTransaction(id: string, tx: Transaction) {

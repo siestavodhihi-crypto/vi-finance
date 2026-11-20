@@ -59,7 +59,7 @@ interface FinanceState {
   clearUserData: () => void;
 
   // Actions — Transactions
-  addTransaction: (tx: Omit<Transaction, "id" | "createdAt">) => void;
+  addTransaction: (tx: Omit<Transaction, "id" | "createdAt">, receiptFile?: File) => void;
   deleteTransaction: (id: string) => void;
   updateTransaction: (id: string, data: Partial<Transaction>) => void;
 
@@ -218,7 +218,7 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     }),
 
   // ── Transactions ──────────────────────────────────────────
-  addTransaction: (tx) => {
+  addTransaction: (tx, receiptFile) => {
     const id = generateId();
     const newTx: Transaction = {
       ...tx,
@@ -268,10 +268,21 @@ export const useFinanceStore = create<FinanceState>()((set, get) => ({
     const { user, dataMode } = get();
     if (dataMode === "supabase" && user) {
       syncOp(
-        Promise.all([
-          repo.insertTransaction(user.id, newTx),
-          ...updatedWallets.map((w) => repo.patchWallet(w.id, { balance: w.balance })),
-        ]),
+        (async () => {
+          let receiptUrl = newTx.receiptUrl;
+          if (receiptFile) {
+            receiptUrl = await repo.uploadReceiptImage(user.id, id, receiptFile);
+            set((state) => ({
+              transactions: state.transactions.map((t) =>
+                t.id === id ? { ...t, receiptUrl } : t
+              ),
+            }));
+          }
+          await Promise.all([
+            repo.insertTransaction(user.id, { ...newTx, receiptUrl }),
+            ...updatedWallets.map((w) => repo.patchWallet(w.id, { balance: w.balance })),
+          ]);
+        })(),
         "Không lưu được giao dịch"
       );
     }

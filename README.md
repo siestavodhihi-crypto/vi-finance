@@ -50,12 +50,13 @@
    ```bash
    cp .env.example .env.local
    ```
-3. Mở `.env.local` và điền 2 giá trị vừa copy:
+3. Mở `.env.local` và điền các giá trị:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+   GEMINI_API_KEY=AIza...   # Tùy chọn — dùng cho tính năng Quét hóa đơn (chỉ chạy phía server)
    ```
-   > **Lưu ý:** File `.env.local` đã được đưa vào `.gitignore`, tuyệt đối không commit lên GitHub.
+   > **Lưu ý:** File `.env.local` đã được đưa vào `.gitignore`, tuyệt đối không commit lên GitHub. `GEMINI_API_KEY` không có tiền tố `NEXT_PUBLIC_` nên không bao giờ lộ ra trình duyệt.
 
 ### Bước 5: Chạy thử trên máy & chạy Unit Tests
 ```bash

@@ -49,6 +49,7 @@ export interface Transaction {
   note: string;
   date: string; // ISO string
   createdAt: string; // ISO string
+  receiptUrl?: string; // Đường dẫn ảnh hóa đơn trong Supabase Storage (chỉ có khi user bật đính kèm)
 }
 
 export interface Budget {

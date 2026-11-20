@@ -46,6 +46,7 @@ create table if not exists public.transactions (
   wallet_id uuid not null references public.wallets(id) on delete cascade,
   to_wallet_id uuid references public.wallets(id) on delete set null,
   note text not null default '',
+  receipt_url text,
   date timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
@@ -224,3 +225,30 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ============================================================================
+-- 5. SUPABASE STORAGE BUCKET 'receipts' (riêng tư, RLS theo user_id)
+-- Chỉ dùng khi người dùng chủ động bật "Đính kèm ảnh vào giao dịch"
+-- ============================================================================
+
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', false)
+on conflict (id) do nothing;
+
+drop policy if exists "receipts_select_own" on storage.objects;
+create policy "receipts_select_own" on storage.objects
+  for select using (
+    bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "receipts_insert_own" on storage.objects;
+create policy "receipts_insert_own" on storage.objects
+  for insert with check (
+    bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "receipts_delete_own" on storage.objects;
+create policy "receipts_delete_own" on storage.objects
+  for delete using (
+    bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+  );
