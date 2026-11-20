@@ -1,14 +1,36 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { Sidebar } from "@/components/layout/sidebar";
-import { BottomNav } from "@/components/layout/bottom-nav";
-import { TopBar } from "@/components/layout/top-bar";
-import { QuickAddModal } from "@/components/quick-add/quick-add-modal";
+import { AppShell } from "@/components/layout/app-shell";
 
 export const metadata: Metadata = {
   title: "Vàng — Quản lý tài chính cá nhân",
-  description: "Ứng dụng quản lý tiền bạc đơn giản cho sinh viên",
+  description: "Ứng dụng quản lý tiền bạc tối giản cho sinh viên",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Vàng",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F4F0" },
+    { media: "(prefers-color-scheme: dark)", color: "#141412" },
+  ],
 };
 
 export default function RootLayout({
@@ -20,24 +42,7 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)]">
         <Providers>
-          {/* Desktop Sidebar */}
-          <Sidebar />
-
-          {/* Mobile Top Bar */}
-          <TopBar />
-
-          {/* Main content area */}
-          <main className="md:ml-56 min-h-screen">
-            <div className="max-w-4xl mx-auto px-4 py-5 md:px-6 md:py-6">
-              {children}
-            </div>
-          </main>
-
-          {/* Mobile Bottom Nav */}
-          <BottomNav />
-
-          {/* Global Quick-Add (Ctrl/Cmd+K) */}
-          <QuickAddModal />
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

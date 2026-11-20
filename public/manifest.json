@@ -1,0 +1,30 @@
+{
+  "name": "Vàng — Quản lý tài chính cá nhân",
+  "short_name": "Vàng",
+  "description": "Ứng dụng quản lý tiền bạc tối giản dành cho sinh viên",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F4F0",
+  "theme_color": "#C8A44A",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
